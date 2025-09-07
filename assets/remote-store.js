@@ -38,7 +38,7 @@ class RemoteStore {
             return null;
         }
         try {
-            const res = await fetch(`/api/admin-state`, { method: 'GET' });
+            const res = await fetch(this.baseUrl, { method: 'GET' });
             if (!res.ok) {
                 throw new Error(`JSONBin GET failed: ${res.status}`);
             }
@@ -64,7 +64,7 @@ class RemoteStore {
             return { ok: false, reason: 'not_configured' };
         }
         try {
-            const res = await fetch(`/api/admin-state`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(state) });
+            const res = await fetch(this.baseUrl, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(state) });
             if (!res.ok) {
                 throw new Error(`JSONBin PUT failed: ${res.status}`);
             }
