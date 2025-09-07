@@ -32,7 +32,7 @@
 })();
 
 // Cấu hình API endpoint (sử dụng proxy để ẩn thông tin nhạy cảm)
-const API_URL = "/api/warranty-data";
+const API_URL = "https://tracuu-5j4.pages.dev/api/warranty-data";
 
 // DOM Elements
 const loadingOverlay = document.getElementById("loading-overlay");
