@@ -552,3 +552,36 @@ body {
 .slide-up {
 	animation: slideUp 0.8s ease-out;
 }
+.warranty-remaining {
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.days-remaining {
+    margin-left: 5px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.days-remaining.active {
+    background-color: #e3f9e5;
+    color: #1b8a2a;
+}
+
+.days-remaining.last-day {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.days-remaining.expired {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.days-remaining.unlimited {
+    background-color: #cce5ff;
+    color: #004085;
+}
