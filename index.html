@@ -132,6 +132,32 @@
 			}
 		})();
 	</script>
+	<style>
+		/* Thêm CSS cho phần hiển thị số ngày còn hiệu lực */
+		.validity-days {
+			background-color: #2ecc71;
+			color: white;
+			padding: 4px 8px;
+			border-radius: 12px;
+			font-size: 14px;
+			font-weight: 600;
+			display: inline-flex;
+			align-items: center;
+			margin-top: 8px;
+		}
+		
+		.validity-days i {
+			margin-right: 5px;
+		}
+		
+		.validity-days.expiring {
+			background-color: #f39c12;
+		}
+		
+		.validity-days.expired {
+			background-color: #e74c3c;
+		}
+	</style>
 </head>
 <body>
 	<!-- Loading Overlay -->
@@ -224,6 +250,192 @@
 		<div id="message" class="message"></div>
 	</div>
 
-	<script src="assets/app.js"></script>
+	<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			// Giả lập dữ liệu phiếu bảo hành
+			const mockWarranties = [
+				{
+					id: "BH001",
+					productName: "iPhone 13 Pro Max",
+					purchaseDate: "2023-06-15",
+					expiryDate: "2025-06-15",
+					status: "active",
+					imageUrl: "assets/warranty1.jpg"
+				},
+				{
+					id: "BH002",
+					productName: "MacBook Pro M1",
+					purchaseDate: "2023-01-10",
+					expiryDate: "2024-01-10",
+					status: "expired",
+					imageUrl: "assets/warranty2.jpg"
+				},
+				{
+					id: "BH003",
+					productName: "iPad Pro 12.9\"",
+					purchaseDate: "2023-08-20",
+					expiryDate: "2024-11-01",
+					status: "active",
+					imageUrl: "assets/warranty3.jpg"
+				}
+			];
+
+			// Form submit handler
+			document.getElementById('lookup-form').addEventListener('submit', function(e) {
+				e.preventDefault();
+				
+				// Hiển thị loading
+				document.getElementById('loading-overlay').classList.remove('hidden');
+				
+				// Lấy giá trị từ form
+				const name = document.getElementById('customerName').value;
+				const id = document.getElementById('customerId').value;
+				
+				// Giả lập tìm kiếm (delay 1.5s)
+				setTimeout(() => {
+					// Ẩn loading
+					document.getElementById('loading-overlay').classList.add('hidden');
+					
+					// Kiểm tra dữ liệu đầu vào giả định
+					if (name.toLowerCase().includes('test') && id.includes('123')) {
+						// Hiển thị kết quả
+						displayResults(name, id, mockWarranties);
+					} else {
+						// Hiển thị thông báo không tìm thấy
+						document.getElementById('message').innerHTML = `
+							<div class="error-message">
+								<i class="fas fa-exclamation-circle"></i>
+								<p>Không tìm thấy thông tin bảo hành. Vui lòng kiểm tra lại thông tin.</p>
+							</div>
+						`;
+						document.getElementById('message').classList.remove('hidden');
+						document.getElementById('result').classList.add('hidden');
+					}
+				}, 1500);
+			});
+			
+			// Hiển thị kết quả tìm kiếm
+			function displayResults(name, id, warranties) {
+				// Ẩn thông báo lỗi nếu có
+				document.getElementById('message').classList.add('hidden');
+				
+				// Hiển thị thông tin khách hàng
+				document.querySelector('#result .customer-name').textContent = name;
+				document.getElementById('customerIdText').textContent = id;
+				
+				// Xóa danh sách phiếu bảo hành cũ
+				const warrantyList = document.getElementById('warrantyList');
+				warrantyList.innerHTML = '';
+				
+				// Thêm các phiếu bảo hành mới
+				warranties.forEach(warranty => {
+					// Tính số ngày còn lại
+					const today = new Date();
+					const expiryDate = new Date(warranty.expiryDate);
+					const daysLeft = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+					
+					// Xác định trạng thái
+					let validityClass = 'validity-days';
+					let statusText = '';
+					let statusIcon = '';
+					
+					if (daysLeft <= 0) {
+						validityClass += ' expired';
+						statusText = 'Đã hết hạn';
+						statusIcon = 'fa-times-circle';
+					} else if (daysLeft <= 30) {
+						validityClass += ' expiring';
+						statusText = `Còn ${daysLeft} ngày`;
+						statusIcon = 'fa-exclamation-circle';
+					} else {
+						statusText = `Còn ${daysLeft} ngày`;
+						statusIcon = 'fa-check-circle';
+					}
+					
+					// Format dates
+					const purchaseDate = new Date(warranty.purchaseDate).toLocaleDateString('vi-VN');
+					const formattedExpiryDate = expiryDate.toLocaleDateString('vi-VN');
+					
+					// Tạo phần tử hiển thị phiếu bảo hành
+					const warrantyItem = document.createElement('div');
+					warrantyItem.className = 'warranty-item';
+					warrantyItem.innerHTML = `
+						<div class="warranty-card">
+							<div class="warranty-image">
+								<img src="${warranty.imageUrl}" alt="${warranty.productName}" data-src="${warranty.imageUrl}">
+							</div>
+							<div class="warranty-details">
+								<h3 class="product-name">${warranty.productName}</h3>
+								<p class="warranty-id">
+									<i class="fas fa-fingerprint"></i>
+									<span>Mã BH: ${warranty.id}</span>
+								</p>
+								<p class="warranty-date">
+									<i class="fas fa-calendar-check"></i>
+									<span>Ngày mua: ${purchaseDate}</span>
+								</p>
+								<p class="warranty-expiry">
+									<i class="fas fa-calendar-times"></i>
+									<span>Hết hạn: ${formattedExpiryDate}</span>
+								</p>
+								<div class="${validityClass}">
+									<i class="fas ${statusIcon}"></i>
+									<span>${statusText}</span>
+								</div>
+							</div>
+						</div>
+					`;
+					
+					// Thêm vào danh sách
+					warrantyList.appendChild(warrantyItem);
+					
+					// Thêm sự kiện click để xem ảnh
+					warrantyItem.querySelector('.warranty-image img').addEventListener('click', function() {
+						openImageModal(this.getAttribute('data-src'), warranty.productName);
+					});
+				});
+				
+				// Hiển thị kết quả
+				document.getElementById('result').classList.remove('hidden');
+			}
+			
+			// Mở modal xem ảnh
+			function openImageModal(src, alt) {
+				const modal = document.getElementById('image-modal');
+				const modalImg = document.getElementById('modal-image');
+				
+				modalImg.src = src;
+				modalImg.alt = alt;
+				modal.classList.remove('hidden');
+				
+				// Thiết lập nút tải xuống
+				document.getElementById('download-btn').onclick = function() {
+					downloadImage(src, 'phieu-bao-hanh.jpg');
+				};
+			}
+			
+			// Đóng modal khi click vào nút đóng
+			document.querySelector('.close-modal').addEventListener('click', function() {
+				document.getElementById('image-modal').classList.add('hidden');
+			});
+			
+			// Đóng modal khi click bên ngoài ảnh
+			document.getElementById('image-modal').addEventListener('click', function(e) {
+				if (e.target === this) {
+					this.classList.add('hidden');
+				}
+			});
+			
+			// Hàm tải xuống ảnh
+			function downloadImage(src, filename) {
+				const a = document.createElement('a');
+				a.href = src;
+				a.download = filename;
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+			}
+		});
+	</script>
 </body>
 </html>
