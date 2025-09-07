@@ -32,7 +32,7 @@
 })();
 
 // Cấu hình API endpoint (sử dụng proxy để ẩn thông tin nhạy cảm)
-const API_URL = "https://tracuu-5j4.pages.dev/api/warranty-data";
+const API_URL = "/api/warranty-data";
 
 // DOM Elements
 const loadingOverlay = document.getElementById("loading-overlay");
@@ -146,6 +146,26 @@ function searchCustomers(customers, searchName, searchId) {
 	});
 }
 
+// Tính số ngày còn lại của bảo hành
+function calculateDaysRemaining(endDate) {
+	if (!endDate) return null;
+	
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+	
+	const end = new Date(endDate);
+	end.setHours(0, 0, 0, 0);
+	
+	// Nếu đã hết hạn
+	if (end < today) return -1;
+	
+	// Tính số ngày còn lại
+	const diffTime = Math.abs(end - today);
+	const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+	
+	return diffDays;
+}
+
 // Render kết quả tìm kiếm
 function render(customers) {
 	const result = document.getElementById("result");
@@ -188,6 +208,21 @@ function createWarrantyCard(warranty, customer, index) {
 	const isActive = (!warranty.start || warranty.start <= today) && 
 					 (!warranty.end || warranty.end >= today);
 	
+	// Tính số ngày còn lại
+	const daysRemaining = calculateDaysRemaining(warranty.end);
+	
+	// Hiển thị thông tin số ngày còn lại
+	let remainingDaysText = '';
+	if (daysRemaining === null) {
+		remainingDaysText = '<span class="days-remaining unlimited">Không giới hạn</span>';
+	} else if (daysRemaining < 0) {
+		remainingDaysText = '<span class="days-remaining expired">Đã hết hạn</span>';
+	} else if (daysRemaining === 0) {
+		remainingDaysText = '<span class="days-remaining last-day">Còn hôm nay</span>';
+	} else {
+		remainingDaysText = `<span class="days-remaining active">Còn ${daysRemaining} ngày</span>`;
+	}
+	
 	card.innerHTML = `
 		<div class="warranty-image" onclick="showImageModal('${warranty.image || 'https://via.placeholder.com/400x200?text=No+Image'}', '${customer.name}', '${customer.id}', '${warranty.end}')">
 			<img src="${warranty.image || 'https://via.placeholder.com/400x200?text=No+Image'}" 
@@ -204,6 +239,9 @@ function createWarrantyCard(warranty, customer, index) {
 			<div class="warranty-dates">
 				<span><i class="fas fa-calendar-alt"></i> Bắt đầu: ${warranty.start || "?"}</span>
 				<span><i class="fas fa-calendar-check"></i> Kết thúc: ${warranty.end || "?"}</span>
+			</div>
+			<div class="warranty-remaining">
+				<i class="fas fa-hourglass-half"></i> ${remainingDaysText}
 			</div>
 			<div class="warranty-status">
 				<span class="status-badge ${isActive ? 'active' : 'expired'}">
