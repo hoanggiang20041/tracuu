@@ -3,97 +3,108 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#0f172a" />
   <title>Tra cứu phiếu bảo hành</title>
 
-  <link rel="stylesheet" href="assets/style.css" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Fonts: Inter Variable (pro) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&display=swap" rel="stylesheet">
 
-  <!-- Production Guard - nhẹ nhàng & không chặn mobile -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="assets/style.css" />
+
+  <!-- Guard: chỉ chặn phím tắt DevTools trên desktop, KHÔNG đụng mobile -->
   <script>
     (function () {
       'use strict';
       const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-      // Nhẹ: tắt console log (không phá chức năng)
-      if (typeof console !== 'undefined') {
-        console.log = console.warn = console.error = console.info = console.debug = function () {};
-      }
+      // tắt console (nhẹ, tránh lộ log; vẫn nên xem log khi dev)
+      (function muteConsole(){
+        try {
+          const noop = function() {};
+          ["log","warn","error","info","debug","table","trace"].forEach(k=>{
+            if (window.console && typeof window.console[k] === "function") {
+              window.console[k] = noop;
+            }
+          });
+        } catch(_) {}
+      })();
 
-      if (isMobile) {
-        // TUYỆT ĐỐI không chặn gì trên mobile để tránh false-positive
-        return;
-      }
+      if (isMobile) return; // để mobile hoạt động mượt, không chặn gì thêm
 
-      // Desktop: chặn một vài phím tắt hay bật devtools
-      document.addEventListener('keydown', function (e) {
+      // Desktop: chặn F12 + các phím tắt mở DevTools / view-source / save / print
+      document.addEventListener("keydown", function(e){
+        const key = e.key || "";
+        const kc  = e.keyCode || 0;
+        const ctrl = e.ctrlKey || e.metaKey; // macOS dùng meta
+
         // F12
-        if (e.keyCode === 123) { e.preventDefault(); return false; }
-        // Ctrl+Shift+I (DevTools)
-        if (e.ctrlKey && e.shiftKey && e.keyCode === 73) { e.preventDefault(); return false; }
-        // Ctrl+U (View Source)
-        if (e.ctrlKey && e.keyCode === 85) { e.preventDefault(); return false; }
-      });
+        if (key === "F12" || kc === 123) { e.preventDefault(); return false; }
 
-      // Không dùng detector dựa vào inner/outer size (hay gây nhầm)
-      // Không chặn copy/paste/select để người dùng thao tác mượt mà
+        // Ctrl+Shift+I/J/C/K (DevTools phổ biến)
+        if (ctrl && e.shiftKey && ["I","J","C","K"].includes(key.toUpperCase())) { e.preventDefault(); return false; }
+
+        // Ctrl+U (view-source), Ctrl+S (save), Ctrl+P (print)
+        if (ctrl && ["U","S","P"].includes(key.toUpperCase())) { e.preventDefault(); return false; }
+
+        // Ctrl+Shift+M (device toolbar), Ctrl+Alt+I (một số trình duyệt)
+        if ((ctrl && e.shiftKey && key.toUpperCase()==="M") || (ctrl && e.altKey && key.toUpperCase()==="I")) { e.preventDefault(); return false; }
+      }, { passive:false });
     })();
   </script>
 </head>
 <body>
-  <!-- Site Header -->
+  <!-- Header -->
   <header class="site-header">
     <div class="site-header__inner container">
-      <a href="#" class="brand">
-        <i class="fas fa-shield-alt"></i>
+      <a class="brand" href="#">
+        <i class="fa-solid fa-shield-halved"></i>
         <span>Tra cứu bảo hành</span>
       </a>
-
       <nav class="nav">
-        <a href="#" class="nav__link is-active"><i class="fa-solid fa-magnifying-glass"></i> Tra cứu</a>
-        <a href="#" class="nav__link"><i class="fa-solid fa-circle-info"></i> Hướng dẫn</a>
-        <a href="#" class="nav__link"><i class="fa-solid fa-headset"></i> Hỗ trợ</a>
+        <a class="nav__link is-active" href="#"><i class="fa-solid fa-magnifying-glass"></i><span>Tra cứu</span></a>
+        <a class="nav__link" href="#"><i class="fa-solid fa-circle-info"></i><span>Hướng dẫn</span></a>
+        <a class="nav__link" href="#"><i class="fa-solid fa-headset"></i><span>Hỗ trợ</span></a>
       </nav>
     </div>
   </header>
 
-  <!-- Loading Overlay -->
-  <div id="loading-overlay" class="loading-overlay hidden">
+  <!-- Loading -->
+  <div id="loading-overlay" class="loading-overlay hidden" aria-hidden="true">
     <div class="loading-spinner">
       <div class="spinner"></div>
       <p>Đang tìm kiếm...</p>
     </div>
   </div>
 
-  <!-- Image Modal -->
+  <!-- Modal ảnh -->
   <div id="image-modal" class="image-modal hidden" aria-hidden="true">
     <div class="modal-content" role="dialog" aria-modal="true" aria-label="Xem ảnh phiếu bảo hành">
       <button class="close-modal" aria-label="Đóng">&times;</button>
       <img id="modal-image" src="" alt="Phiếu bảo hành">
       <div class="modal-actions">
         <button id="download-btn" class="download-btn">
-          <i class="fas fa-download"></i> Tải ảnh
+          <i class="fa-solid fa-download"></i> Tải ảnh
         </button>
       </div>
     </div>
   </div>
 
+  <!-- Main -->
   <main class="container page">
-    <!-- Hero -->
     <section class="hero">
-      <div class="hero__content">
-        <h1 class="title">Tra cứu phiếu bảo hành</h1>
-        <p class="subtitle">Nhập thông tin khách hàng để xem nhanh trạng thái bảo hành.</p>
-      </div>
+      <h1 class="title">Tra cứu phiếu bảo hành</h1>
+      <p class="subtitle">Nhập thông tin khách hàng để xem nhanh trạng thái bảo hành.</p>
     </section>
 
-    <!-- Form tìm kiếm -->
+    <!-- Form -->
     <form id="lookup-form" class="search-form card" autocomplete="off" novalidate>
       <div class="search-container">
         <div class="search-field">
           <label for="customerName">
-            <i class="fas fa-user"></i> Họ và tên <span class="req">*</span>
+            <i class="fa-solid fa-user"></i> Họ và tên <span class="req">*</span>
           </label>
           <input
             id="customerName"
@@ -107,7 +118,7 @@
 
         <div class="search-field">
           <label for="customerId">
-            <i class="fas fa-id-card"></i> ID khách hàng <span class="req">*</span>
+            <i class="fa-regular fa-id-badge"></i> ID khách hàng <span class="req">*</span>
           </label>
           <input
             id="customerId"
@@ -120,7 +131,7 @@
         </div>
 
         <button type="submit" class="search-btn">
-          <i class="fas fa-search"></i>
+          <i class="fa-solid fa-magnifying-glass"></i>
           <span>Tra cứu</span>
         </button>
       </div>
@@ -130,30 +141,28 @@
     <section id="result" class="result hidden card">
       <div class="customer-info">
         <div class="customer-avatar" aria-hidden="true">
-          <i class="fas fa-user-circle"></i>
+          <i class="fa-solid fa-circle-user"></i>
         </div>
         <div class="customer-details">
-          <!-- Giữ nguyên id để không phá app.js hiện có -->
+          <!-- Giữ nguyên id này theo yêu cầu dự án -->
           <h2 id="customerName" class="customer-name"></h2>
           <p class="customer-id">
-            <i class="fas fa-id-badge"></i>
+            <i class="fa-regular fa-id-badge"></i>
             <span id="customerIdText"></span>
           </p>
         </div>
       </div>
-
-      <div id="warrantyList" class="warranty-grid"><!-- cards được app.js render vào đây --></div>
+      <div id="warrantyList" class="warranty-grid"></div>
     </section>
 
-    <!-- Thông báo -->
     <div id="message" class="message" role="status" aria-live="polite"></div>
   </main>
 
-  <!-- Site Footer -->
+  <!-- Footer -->
   <footer class="site-footer">
     <div class="container site-footer__inner">
       <div class="footer__brand">
-        <i class="fas fa-shield-alt"></i>
+        <i class="fa-solid fa-shield-halved"></i>
         <strong>Tra cứu bảo hành</strong>
       </div>
       <div class="footer__links">
@@ -161,81 +170,53 @@
         <a href="#">Chính sách bảo mật</a>
         <a href="#">Liên hệ</a>
       </div>
-      <div class="footer__copy">
-        © <span id="y"></span> Your Company. All rights reserved.
-      </div>
+      <div class="footer__copy">© <span id="y"></span> Your Company. All rights reserved.</div>
     </div>
     <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
   </footer>
 
-  <!-- Fallback ảnh xem trước + empty state -->
+  <!-- Fallback ảnh + empty state (không ảnh thì vẫn hiển thị placeholder) -->
   <script>
-    // Placeholder SVG (data URI) khi ảnh lỗi/thiếu
-    const PLACEHOLDER =
-      'data:image/svg+xml;utf8,' +
-      encodeURIComponent(`
-        <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675">
-          <defs>
-            <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0%" stop-color="#0b1220"/>
-              <stop offset="100%" stop-color="#111827"/>
-            </linearGradient>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#g)"/>
-          <g fill="#93c5fd" opacity="0.25" transform="translate(600,337)">
-            <circle r="180"/>
-            <circle r="260" opacity="0.2"/>
-            <circle r="340" opacity="0.15"/>
-          </g>
-          <g fill="#e5e7eb" font-family="Inter, Arial" text-anchor="middle">
-            <text x="600" y="350" font-size="42" font-weight="700">Không có ảnh xem trước</text>
-            <text x="600" y="410" font-size="22" opacity="0.75">Ảnh sẽ hiển thị khi có đường dẫn hợp lệ</text>
-          </g>
-        </svg>
-      `);
+    const PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675">
+        <defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0%" stop-color="#0b1220"/><stop offset="100%" stop-color="#111827"/></linearGradient></defs>
+        <rect width="100%" height="100%" fill="url(#g)"/>
+        <g fill="#93c5fd" opacity="0.25" transform="translate(600,337)">
+          <circle r="180"/><circle r="260" opacity="0.2"/><circle r="340" opacity="0.15"/>
+        </g>
+        <g fill="#e5e7eb" font-family="Inter, Arial" text-anchor="middle">
+          <text x="600" y="350" font-size="42" font-weight="700">Không có ảnh xem trước</text>
+          <text x="600" y="410" font-size="22" opacity="0.75">Ảnh sẽ hiển thị khi có đường dẫn hợp lệ</text>
+        </g>
+      </svg>`);
 
     document.addEventListener('DOMContentLoaded', function(){
       const list = document.getElementById('warrantyList');
-      const msg  = document.getElementById('message');
-
       const applyImgFallback = () => {
-        const imgs = list.querySelectorAll('img');
-        imgs.forEach(img => {
-          if (img.__hasFallback) return;
-          img.__hasFallback = true;
-          if (!img.getAttribute('src') || img.getAttribute('src') === '#') {
-            img.setAttribute('src', PLACEHOLDER);
-          }
-          img.addEventListener('error', () => { img.src = PLACEHOLDER; }, { once: true });
-          if (!img.classList.contains('thumb')) img.classList.add('thumb');
+        list.querySelectorAll('img').forEach(img => {
+          if (img.__ok) return;
+          img.__ok = true;
+          if (!img.src || img.src === location.href || img.getAttribute('src') === '#') img.src = PLACEHOLDER;
+          img.addEventListener('error', () => img.src = PLACEHOLDER, { once:true });
+          img.classList.add('thumb');
         });
       };
-
-      const updateEmptyState = () => {
+      const updateEmpty = () => {
         const hasItem = Array.from(list.children).some(n => !n.classList?.contains('warranty-empty'));
         const old = list.querySelector('.warranty-empty');
         if (!hasItem) {
           if (!old) {
-            const div = document.createElement('div');
-            div.className = 'warranty-empty';
-            div.textContent = 'Chưa có phiếu bảo hành nào được tìm thấy – thử lại với thông tin khác.';
-            list.appendChild(div);
+            const d = document.createElement('div');
+            d.className = 'warranty-empty';
+            d.textContent = 'Chưa có phiếu bảo hành nào được tìm thấy – thử lại với thông tin khác.';
+            list.appendChild(d);
           }
-        } else if (old) {
-          old.remove();
-        }
+        } else if (old) old.remove();
       };
-
-      const obs = new MutationObserver(() => {
-        applyImgFallback();
-        updateEmptyState();
-      });
-      obs.observe(list, { childList: true, subtree: true });
-
-      applyImgFallback();
-      updateEmptyState();
-
-      if (msg) msg.style.color = '#e5e7eb';
+      new MutationObserver(()=>{applyImgFallback();updateEmpty();})
+        .observe(list,{childList:true,subtree:true});
+      applyImgFallback(); updateEmpty();
     });
   </script>
 
