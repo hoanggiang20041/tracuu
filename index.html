@@ -13,151 +13,116 @@
 		(function() {
 			'use strict';
 			
-			// Kiểm tra nếu là thiết bị di động
-			const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+			// Disable console logs
+			if (typeof console !== 'undefined') {
+				console.log = console.warn = console.error = console.info = console.debug = function() {};
+			}
 			
-			// Chỉ vô hiệu hóa console logs khi phát hiện developer tools
-			const originalConsole = {
-				log: console.log,
-				warn: console.warn,
-				error: console.error,
-				info: console.info,
-				debug: console.debug
-			};
+			// Disable right-click context menu
+			document.addEventListener('contextmenu', function(e) {
+				e.preventDefault();
+				return false;
+			});
 			
-			// Phát hiện và chặn Developer Tools
+			// Disable F12, Ctrl+Shift+I, Ctrl+U, Ctrl+S, Ctrl+P
+			document.addEventListener('keydown', function(e) {
+				// F12
+				if (e.keyCode === 123) {
+					e.preventDefault();
+					return false;
+				}
+				// Ctrl+Shift+I (DevTools)
+				if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
+					e.preventDefault();
+					return false;
+				}
+				// Ctrl+U (View Source)
+				if (e.ctrlKey && e.keyCode === 85) {
+					e.preventDefault();
+					return false;
+				}
+				// Ctrl+S (Save)
+				if (e.ctrlKey && e.keyCode === 83) {
+					e.preventDefault();
+					return false;
+				}
+				// Ctrl+P (Print)
+				if (e.ctrlKey && e.keyCode === 80) {
+					e.preventDefault();
+					return false;
+				}
+			});
+			
+			// Disable text selection
+			document.addEventListener('selectstart', function(e) {
+				e.preventDefault();
+				return false;
+			});
+			
+			// Disable drag and drop
+			document.addEventListener('dragstart', function(e) {
+				e.preventDefault();
+				return false;
+			});
+			
+			// Disable copy/paste
+			document.addEventListener('copy', function(e) {
+				e.preventDefault();
+				return false;
+			});
+			
+			document.addEventListener('paste', function(e) {
+				e.preventDefault();
+				return false;
+			});
+			
+			// Disable cut
+			document.addEventListener('cut', function(e) {
+				e.preventDefault();
+				return false;
+			});
+			
+			// Disable print screen
+			document.addEventListener('keyup', function(e) {
+				if (e.keyCode === 44) { // Print Screen
+					e.preventDefault();
+					return false;
+				}
+			});
+			
+			// Disable common debug shortcuts
+			document.addEventListener('keydown', function(e) {
+				// Alt+Tab, Alt+F4
+				if (e.altKey && (e.keyCode === 9 || e.keyCode === 115)) {
+					e.preventDefault();
+					return false;
+				}
+			});
+			
+			// Clear console periodically
+			setInterval(function() {
+				if (typeof console !== 'undefined' && console.clear) {
+					console.clear();
+				}
+			}, 1000);
+			
+			// Disable developer tools detection
 			let devtools = {open: false, orientation: null};
 			const threshold = 160;
 			
-			// Kiểm tra DevTools định kỳ
 			setInterval(function() {
-				// Kiểm tra cửa sổ DevTools mở
 				if (window.outerHeight - window.innerHeight > threshold || 
 					window.outerWidth - window.innerWidth > threshold) {
 					if (!devtools.open) {
 						devtools.open = true;
-						// Vô hiệu hóa các chức năng khi phát hiện DevTools
-						disableFeatures();
-						// Redirect hoặc hiển thị cảnh báo
+						// Redirect or show warning
 						document.body.innerHTML = '<div style="text-align:center;padding:50px;font-family:Arial;"><h1>Access Denied</h1><p>Developer tools detected. Please close and refresh the page.</p></div>';
 					}
-				} else {
-					devtools.open = false;
 				}
-			}, 1000);
+			}, 500);
 			
-			// Vô hiệu hóa tính năng khi phát hiện DevTools
-			function disableFeatures() {
-				// Vô hiệu hóa console
-				if (typeof console !== 'undefined') {
-					console.log = console.warn = console.error = console.info = console.debug = function() {};
-				}
-				
-				// Vô hiệu hóa chọn văn bản
-				document.addEventListener('selectstart', function(e) {
-					e.preventDefault();
-					return false;
-				});
-				
-				// Vô hiệu hóa sao chép/dán
-				document.addEventListener('copy', function(e) {
-					e.preventDefault();
-					return false;
-				});
-				
-				document.addEventListener('paste', function(e) {
-					e.preventDefault();
-					return false;
-				});
-				
-				document.addEventListener('cut', function(e) {
-					e.preventDefault();
-					return false;
-				});
-			}
-			
-			// Chỉ áp dụng biện pháp bảo vệ chính khi không phải là thiết bị di động
-			if (!isMobile) {
-				// Vô hiệu hóa menu chuột phải
-				document.addEventListener('contextmenu', function(e) {
-					e.preventDefault();
-					return false;
-				});
-				
-				// Vô hiệu hóa F12, Ctrl+Shift+I, Ctrl+U, Ctrl+S, Ctrl+P
-				document.addEventListener('keydown', function(e) {
-					// F12
-					if (e.keyCode === 123) {
-						e.preventDefault();
-						disableFeatures();
-						return false;
-					}
-					// Ctrl+Shift+I (DevTools)
-					if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
-						e.preventDefault();
-						disableFeatures();
-						return false;
-					}
-					// Ctrl+U (View Source)
-					if (e.ctrlKey && e.keyCode === 85) {
-						e.preventDefault();
-						disableFeatures();
-						return false;
-					}
-					// Ctrl+S (Save)
-					if (e.ctrlKey && e.keyCode === 83) {
-						e.preventDefault();
-						return false;
-					}
-					// Ctrl+P (Print)
-					if (e.ctrlKey && e.keyCode === 80) {
-						e.preventDefault();
-						return false;
-					}
-				});
-				
-				// Vô hiệu hóa kéo và thả
-				document.addEventListener('dragstart', function(e) {
-					e.preventDefault();
-					return false;
-				});
-				
-				// Vô hiệu hóa print screen
-				document.addEventListener('keyup', function(e) {
-					if (e.keyCode === 44) { // Print Screen
-						e.preventDefault();
-						return false;
-					}
-				});
-			}
 		})();
 	</script>
-	<style>
-		/* Thêm CSS cho phần hiển thị số ngày còn hiệu lực */
-		.validity-days {
-			background-color: #2ecc71;
-			color: white;
-			padding: 4px 8px;
-			border-radius: 12px;
-			font-size: 14px;
-			font-weight: 600;
-			display: inline-flex;
-			align-items: center;
-			margin-top: 8px;
-		}
-		
-		.validity-days i {
-			margin-right: 5px;
-		}
-		
-		.validity-days.expiring {
-			background-color: #f39c12;
-		}
-		
-		.validity-days.expired {
-			background-color: #e74c3c;
-		}
-	</style>
 </head>
 <body>
 	<!-- Loading Overlay -->
@@ -252,190 +217,645 @@
 
 	<script>
 		document.addEventListener('DOMContentLoaded', function() {
-			// Giả lập dữ liệu phiếu bảo hành
-			const mockWarranties = [
-				{
-					id: "BH001",
-					productName: "iPhone 13 Pro Max",
-					purchaseDate: "2023-06-15",
-					expiryDate: "2025-06-15",
-					status: "active",
-					imageUrl: "assets/warranty1.jpg"
-				},
-				{
-					id: "BH002",
-					productName: "MacBook Pro M1",
-					purchaseDate: "2023-01-10",
-					expiryDate: "2024-01-10",
-					status: "expired",
-					imageUrl: "assets/warranty2.jpg"
-				},
-				{
-					id: "BH003",
-					productName: "iPad Pro 12.9\"",
-					purchaseDate: "2023-08-20",
-					expiryDate: "2024-11-01",
-					status: "active",
-					imageUrl: "assets/warranty3.jpg"
+			const form = document.getElementById('lookup-form');
+			const result = document.getElementById('result');
+			const messageDiv = document.getElementById('message');
+			const loadingOverlay = document.getElementById('loading-overlay');
+			const warrantyList = document.getElementById('warrantyList');
+			const imageModal = document.getElementById('image-modal');
+			const modalImage = document.getElementById('modal-image');
+			const closeModal = document.querySelector('.close-modal');
+			const downloadBtn = document.getElementById('download-btn');
+			
+			// Đóng modal khi nhấp vào nút đóng
+			closeModal.addEventListener('click', function() {
+				imageModal.classList.add('hidden');
+			});
+			
+			// Đóng modal khi nhấp bên ngoài modal
+			window.addEventListener('click', function(event) {
+				if (event.target === imageModal) {
+					imageModal.classList.add('hidden');
 				}
-			];
-
-			// Form submit handler
-			document.getElementById('lookup-form').addEventListener('submit', function(e) {
+			});
+			
+			// Tải ảnh
+			downloadBtn.addEventListener('click', function() {
+				const imageUrl = modalImage.src;
+				const link = document.createElement('a');
+				link.href = imageUrl;
+				link.download = 'phieu-bao-hanh.jpg';
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+			});
+			
+			form.addEventListener('submit', function(e) {
 				e.preventDefault();
 				
-				// Hiển thị loading
-				document.getElementById('loading-overlay').classList.remove('hidden');
+				const customerName = document.getElementById('customerName').value.trim();
+				const customerId = document.getElementById('customerId').value.trim();
 				
-				// Lấy giá trị từ form
-				const name = document.getElementById('customerName').value;
-				const id = document.getElementById('customerId').value;
+				// Kiểm tra dữ liệu đầu vào
+				if (!customerName || !customerId) {
+					showMessage('Vui lòng nhập đầy đủ thông tin.', 'error');
+					return;
+				}
 				
-				// Giả lập tìm kiếm (delay 1.5s)
-				setTimeout(() => {
-					// Ẩn loading
-					document.getElementById('loading-overlay').classList.add('hidden');
+				// Hiển thị overlay loading
+				loadingOverlay.classList.remove('hidden');
+				
+				// Giả lập tìm kiếm (thay thế bằng API thực tế)
+				setTimeout(function() {
+					loadingOverlay.classList.add('hidden');
 					
-					// Kiểm tra dữ liệu đầu vào giả định
-					if (name.toLowerCase().includes('test') && id.includes('123')) {
-						// Hiển thị kết quả
-						displayResults(name, id, mockWarranties);
+					// Giả lập dữ liệu phiếu bảo hành
+					if (customerId === '123456' && customerName.toLowerCase().includes('nguyễn')) {
+						showResult(customerName, customerId, getMockWarranties());
 					} else {
-						// Hiển thị thông báo không tìm thấy
-						document.getElementById('message').innerHTML = `
-							<div class="error-message">
-								<i class="fas fa-exclamation-circle"></i>
-								<p>Không tìm thấy thông tin bảo hành. Vui lòng kiểm tra lại thông tin.</p>
-							</div>
-						`;
-						document.getElementById('message').classList.remove('hidden');
-						document.getElementById('result').classList.add('hidden');
+						showMessage('Không tìm thấy thông tin bảo hành với dữ liệu bạn cung cấp.', 'error');
 					}
 				}, 1500);
 			});
 			
-			// Hiển thị kết quả tìm kiếm
-			function displayResults(name, id, warranties) {
-				// Ẩn thông báo lỗi nếu có
-				document.getElementById('message').classList.add('hidden');
+			function showResult(name, id, warranties) {
+				// Ẩn thông báo lỗi (nếu có)
+				messageDiv.classList.add('hidden');
 				
-				// Hiển thị thông tin khách hàng
-				document.querySelector('#result .customer-name').textContent = name;
+				// Hiển thị kết quả
+				result.classList.remove('hidden');
+				
+				// Cập nhật thông tin khách hàng
+				document.querySelector('.customer-name').textContent = name;
 				document.getElementById('customerIdText').textContent = id;
 				
-				// Xóa danh sách phiếu bảo hành cũ
-				const warrantyList = document.getElementById('warrantyList');
+				// Xóa các phiếu bảo hành cũ
 				warrantyList.innerHTML = '';
 				
 				// Thêm các phiếu bảo hành mới
-				warranties.forEach(warranty => {
-					// Tính số ngày còn lại
-					const today = new Date();
-					const expiryDate = new Date(warranty.expiryDate);
-					const daysLeft = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
-					
-					// Xác định trạng thái
-					let validityClass = 'validity-days';
-					let statusText = '';
-					let statusIcon = '';
-					
-					if (daysLeft <= 0) {
-						validityClass += ' expired';
-						statusText = 'Đã hết hạn';
-						statusIcon = 'fa-times-circle';
-					} else if (daysLeft <= 30) {
-						validityClass += ' expiring';
-						statusText = `Còn ${daysLeft} ngày`;
-						statusIcon = 'fa-exclamation-circle';
-					} else {
-						statusText = `Còn ${daysLeft} ngày`;
-						statusIcon = 'fa-check-circle';
-					}
-					
-					// Format dates
-					const purchaseDate = new Date(warranty.purchaseDate).toLocaleDateString('vi-VN');
-					const formattedExpiryDate = expiryDate.toLocaleDateString('vi-VN');
-					
-					// Tạo phần tử hiển thị phiếu bảo hành
-					const warrantyItem = document.createElement('div');
-					warrantyItem.className = 'warranty-item';
-					warrantyItem.innerHTML = `
-						<div class="warranty-card">
-							<div class="warranty-image">
-								<img src="${warranty.imageUrl}" alt="${warranty.productName}" data-src="${warranty.imageUrl}">
-							</div>
-							<div class="warranty-details">
-								<h3 class="product-name">${warranty.productName}</h3>
-								<p class="warranty-id">
-									<i class="fas fa-fingerprint"></i>
-									<span>Mã BH: ${warranty.id}</span>
-								</p>
-								<p class="warranty-date">
-									<i class="fas fa-calendar-check"></i>
-									<span>Ngày mua: ${purchaseDate}</span>
-								</p>
-								<p class="warranty-expiry">
-									<i class="fas fa-calendar-times"></i>
-									<span>Hết hạn: ${formattedExpiryDate}</span>
-								</p>
-								<div class="${validityClass}">
-									<i class="fas ${statusIcon}"></i>
-									<span>${statusText}</span>
-								</div>
-							</div>
+				warranties.forEach(function(warranty) {
+					const card = createWarrantyCard(warranty);
+					warrantyList.appendChild(card);
+				});
+			}
+			
+			function createWarrantyCard(warranty) {
+				const card = document.createElement('div');
+				card.className = 'warranty-card';
+				
+				// Tính toán ngày còn lại
+				const today = new Date();
+				const endDate = new Date(warranty.endDate);
+				const daysLeft = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+				
+				// Xác định trạng thái bảo hành
+				let statusClass = 'status-active';
+				let statusText = 'Còn hiệu lực';
+				
+				if (daysLeft <= 0) {
+					statusClass = 'status-expired';
+					statusText = 'Hết hạn';
+				} else if (daysLeft <= 30) {
+					statusClass = 'status-warning';
+					statusText = 'Sắp hết hạn';
+				}
+				
+				// Tạo chuỗi HTML cho card
+				card.innerHTML = `
+					<div class="warranty-header">
+						<div class="warranty-id">${warranty.id}</div>
+						<div class="warranty-status ${statusClass}">${statusText}</div>
+					</div>
+					<div class="warranty-image-container">
+						<img src="${warranty.image}" alt="Phiếu bảo hành" class="warranty-image">
+						<div class="image-overlay">
+							<button class="view-image-btn"><i class="fas fa-search-plus"></i> Xem ảnh</button>
 						</div>
-					`;
-					
-					// Thêm vào danh sách
-					warrantyList.appendChild(warrantyItem);
-					
-					// Thêm sự kiện click để xem ảnh
-					warrantyItem.querySelector('.warranty-image img').addEventListener('click', function() {
-						openImageModal(this.getAttribute('data-src'), warranty.productName);
-					});
+					</div>
+					<div class="warranty-info">
+						<div class="warranty-product">
+							<i class="fas fa-box"></i>
+							<span>${warranty.productName}</span>
+						</div>
+						<div class="warranty-date">
+							<i class="fas fa-calendar-check"></i>
+							<span>Ngày bắt đầu: ${formatDate(warranty.startDate)}</span>
+						</div>
+						<div class="warranty-date">
+							<i class="fas fa-calendar-times"></i>
+							<span>Ngày kết thúc: ${formatDate(warranty.endDate)}</span>
+						</div>
+						<div class="warranty-days-left ${statusClass}">
+							<i class="fas fa-hourglass-half"></i>
+							<span>${daysLeft > 0 ? 'Còn ' + daysLeft + ' ngày' : 'Đã hết hạn'}</span>
+						</div>
+					</div>
+				`;
+				
+				// Thêm sự kiện khi nhấp vào nút xem ảnh
+				const viewBtn = card.querySelector('.view-image-btn');
+				viewBtn.addEventListener('click', function() {
+					modalImage.src = warranty.image;
+					imageModal.classList.remove('hidden');
 				});
 				
-				// Hiển thị kết quả
-				document.getElementById('result').classList.remove('hidden');
+				return card;
 			}
 			
-			// Mở modal xem ảnh
-			function openImageModal(src, alt) {
-				const modal = document.getElementById('image-modal');
-				const modalImg = document.getElementById('modal-image');
-				
-				modalImg.src = src;
-				modalImg.alt = alt;
-				modal.classList.remove('hidden');
-				
-				// Thiết lập nút tải xuống
-				document.getElementById('download-btn').onclick = function() {
-					downloadImage(src, 'phieu-bao-hanh.jpg');
-				};
+			function showMessage(text, type) {
+				messageDiv.textContent = text;
+				messageDiv.className = 'message ' + type;
+				messageDiv.classList.remove('hidden');
+				result.classList.add('hidden');
 			}
 			
-			// Đóng modal khi click vào nút đóng
-			document.querySelector('.close-modal').addEventListener('click', function() {
-				document.getElementById('image-modal').classList.add('hidden');
-			});
+			function formatDate(dateString) {
+				const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+				const date = new Date(dateString);
+				return date.toLocaleDateString('vi-VN', options);
+			}
 			
-			// Đóng modal khi click bên ngoài ảnh
-			document.getElementById('image-modal').addEventListener('click', function(e) {
-				if (e.target === this) {
-					this.classList.add('hidden');
-				}
-			});
-			
-			// Hàm tải xuống ảnh
-			function downloadImage(src, filename) {
-				const a = document.createElement('a');
-				a.href = src;
-				a.download = filename;
-				document.body.appendChild(a);
-				a.click();
-				document.body.removeChild(a);
+			function getMockWarranties() {
+				const today = new Date();
+				
+				// Tạo các ngày kết thúc cho các trường hợp khác nhau
+				const futureDate = new Date(today);
+				futureDate.setMonth(futureDate.getMonth() + 6);
+				
+				const nearExpiryDate = new Date(today);
+				nearExpiryDate.setDate(nearExpiryDate.getDate() + 15);
+				
+				const pastDate = new Date(today);
+				pastDate.setMonth(pastDate.getMonth() - 2);
+				
+				return [
+					{
+						id: 'BH20230001',
+						productName: 'Laptop Dell XPS 13',
+						startDate: '2023-06-10',
+						endDate: futureDate.toISOString().split('T')[0],
+						image: 'https://example.com/warranty1.jpg'
+					},
+					{
+						id: 'BH20230042',
+						productName: 'Máy in HP LaserJet Pro',
+						startDate: '2023-09-15',
+						endDate: nearExpiryDate.toISOString().split('T')[0],
+						image: 'https://example.com/warranty2.jpg'
+					},
+					{
+						id: 'BH20220098',
+						productName: 'Điện thoại iPhone 13',
+						startDate: '2022-11-20',
+						endDate: pastDate.toISOString().split('T')[0],
+						image: 'https://example.com/warranty3.jpg'
+					}
+				];
 			}
 		});
 	</script>
-</body>
+	
+	<style>
+		:root {
+			--primary-color: #3498db;
+			--secondary-color: #2980b9;
+			--light-color: #ecf0f1;
+			--dark-color: #34495e;
+			--danger-color: #e74c3c;
+			--success-color: #2ecc71;
+			--warning-color: #f39c12;
+			--gray-color: #7f8c8d;
+			--white-color: #ffffff;
+			--card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+			--card-radius: 8px;
+			--transition-speed: 0.3s;
+		}
+
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			font-family: 'Inter', sans-serif;
+			background-color: #f5f7fa;
+			color: var(--dark-color);
+			line-height: 1.6;
+		}
+
+		.container {
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 20px;
+		}
+
+		/* Header Styles */
+		.header {
+			text-align: center;
+			margin-bottom: 40px;
+			animation: fadeIn 0.8s ease-in-out;
+		}
+
+		.logo {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 12px;
+		}
+
+		.logo i {
+			font-size: 2.5rem;
+			color: var(--primary-color);
+		}
+
+		.title {
+			font-size: 2rem;
+			font-weight: 700;
+			color: var(--dark-color);
+		}
+
+		/* Form Styles */
+		.search-form {
+			background-color: var(--white-color);
+			border-radius: var(--card-radius);
+			box-shadow: var(--card-shadow);
+			padding: 25px;
+			margin-bottom: 30px;
+			animation: slideUp 0.5s ease-in-out;
+		}
+
+		.search-container {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 20px;
+			align-items: flex-end;
+		}
+
+		.search-field {
+			flex: 1 0 280px;
+		}
+
+		.search-field label {
+			display: block;
+			margin-bottom: 8px;
+			font-weight: 500;
+			font-size: 0.9rem;
+			color: var(--dark-color);
+		}
+
+		.search-field input {
+			width: 100%;
+			padding: 12px 16px;
+			border: 1px solid #e1e4e8;
+			border-radius: 6px;
+			font-size: 1rem;
+			transition: border-color var(--transition-speed);
+		}
+
+		.search-field input:focus {
+			outline: none;
+			border-color: var(--primary-color);
+			box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+		}
+
+		.search-field i {
+			margin-right: 6px;
+			color: var(--primary-color);
+		}
+
+		.search-btn {
+			background-color: var(--primary-color);
+			color: var(--white-color);
+			border: none;
+			border-radius: 6px;
+			padding: 12px 20px;
+			font-size: 1rem;
+			font-weight: 500;
+			cursor: pointer;
+			transition: background-color var(--transition-speed);
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			min-width: 120px;
+			justify-content: center;
+		}
+
+		.search-btn:hover {
+			background-color: var(--secondary-color);
+		}
+
+		/* Result Styles */
+		.result {
+			background-color: var(--white-color);
+			border-radius: var(--card-radius);
+			box-shadow: var(--card-shadow);
+			padding: 25px;
+			animation: fadeIn 0.5s ease-in-out;
+		}
+
+		.customer-info {
+			display: flex;
+			align-items: center;
+			gap: 20px;
+			padding-bottom: 20px;
+			border-bottom: 1px solid #e1e4e8;
+			margin-bottom: 20px;
+		}
+
+		.customer-avatar {
+			font-size: 3rem;
+			color: var(--primary-color);
+		}
+
+		.customer-name {
+			font-size: 1.5rem;
+			font-weight: 600;
+			margin-bottom: 5px;
+		}
+
+		.customer-id {
+			font-size: 0.9rem;
+			color: var(--gray-color);
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.warranty-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+			gap: 20px;
+		}
+
+		.warranty-card {
+			border-radius: var(--card-radius);
+			box-shadow: var(--card-shadow);
+			overflow: hidden;
+			transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+			background-color: var(--white-color);
+		}
+
+		.warranty-card:hover {
+			transform: translateY(-5px);
+			box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+		}
+
+		.warranty-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 15px;
+			border-bottom: 1px solid #e1e4e8;
+		}
+
+		.warranty-id {
+			font-weight: 600;
+			font-size: 0.9rem;
+		}
+
+		.warranty-status {
+			font-size: 0.8rem;
+			padding: 4px 10px;
+			border-radius: 50px;
+			font-weight: 500;
+		}
+
+		.status-active {
+			background-color: rgba(46, 204, 113, 0.15);
+			color: var(--success-color);
+		}
+
+		.status-warning {
+			background-color: rgba(243, 156, 18, 0.15);
+			color: var(--warning-color);
+		}
+
+		.status-expired {
+			background-color: rgba(231, 76, 60, 0.15);
+			color: var(--danger-color);
+		}
+
+		.warranty-image-container {
+			position: relative;
+			height: 180px;
+			overflow: hidden;
+		}
+
+		.warranty-image {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			transition: transform var(--transition-speed);
+		}
+
+		.image-overlay {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(0, 0, 0, 0.5);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			opacity: 0;
+			transition: opacity var(--transition-speed);
+		}
+
+		.warranty-image-container:hover .image-overlay {
+			opacity: 1;
+		}
+
+		.warranty-image-container:hover .warranty-image {
+			transform: scale(1.05);
+		}
+
+		.view-image-btn {
+			background-color: var(--white-color);
+			color: var(--dark-color);
+			border: none;
+			border-radius: 4px;
+			padding: 8px 12px;
+			font-size: 0.9rem;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.warranty-info {
+			padding: 15px;
+		}
+
+		.warranty-product, .warranty-date, .warranty-days-left {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			margin-bottom: 8px;
+			font-size: 0.9rem;
+		}
+
+		.warranty-product {
+			font-weight: 500;
+			margin-bottom: 12px;
+		}
+
+		.warranty-days-left {
+			font-weight: 600;
+			margin-top: 12px;
+		}
+
+		/* Message Styles */
+		.message {
+			padding: 15px;
+			border-radius: var(--card-radius);
+			text-align: center;
+			margin-bottom: 20px;
+			animation: fadeIn 0.5s ease-in-out;
+		}
+
+		.message.error {
+			background-color: rgba(231, 76, 60, 0.15);
+			color: var(--danger-color);
+		}
+
+		.message.success {
+			background-color: rgba(46, 204, 113, 0.15);
+			color: var(--success-color);
+		}
+
+		/* Loading Overlay */
+		.loading-overlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(255, 255, 255, 0.8);
+			z-index: 1000;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			transition: opacity var(--transition-speed);
+		}
+
+		.loading-spinner {
+			text-align: center;
+		}
+
+		.spinner {
+			width: 50px;
+			height: 50px;
+			border: 4px solid rgba(52, 152, 219, 0.3);
+			border-radius: 50%;
+			border-top-color: var(--primary-color);
+			animation: spin 1s linear infinite;
+			margin: 0 auto 15px;
+		}
+
+		.loading-spinner p {
+			color: var(--dark-color);
+			font-weight: 500;
+		}
+
+		/* Image Modal */
+		.image-modal {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(0, 0, 0, 0.8);
+			z-index: 1000;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			opacity: 1;
+			transition: opacity var(--transition-speed);
+		}
+
+		.modal-content {
+			position: relative;
+			max-width: 90%;
+			max-height: 90%;
+		}
+
+		.close-modal {
+			position: absolute;
+			top: -40px;
+			right: 0;
+			color: var(--white-color);
+			font-size: 30px;
+			cursor: pointer;
+		}
+
+		.modal-content img {
+			max-width: 100%;
+			max-height: 80vh;
+			display: block;
+			border-radius: 4px;
+		}
+
+		.modal-actions {
+			margin-top: 15px;
+			text-align: center;
+		}
+
+		.download-btn {
+			background-color: var(--primary-color);
+			color: var(--white-color);
+			border: none;
+			border-radius: 4px;
+			padding: 8px 16px;
+			font-size: 1rem;
+			cursor: pointer;
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.download-btn:hover {
+			background-color: var(--secondary-color);
+		}
+
+		.hidden {
+			display: none;
+		}
+
+		/* Animations */
+		@keyframes fadeIn {
+			from { opacity: 0; }
+			to { opacity: 1; }
+		}
+
+		@keyframes slideUp {
+			from { transform: translateY(20px); opacity: 0; }
+			to { transform: translateY(0); opacity: 1; }
+		}
+
+		@keyframes spin {
+			to { transform: rotate(360deg); }
+		}
+
+		/* Responsive Styles */
+		@media screen and (max-width: 768px) {
+			.search-container {
+				flex-direction: column;
+			}
+			
+			.search-field {
+				flex: 1 0 100%;
+			}
+			
+			.warranty-grid {
+				grid-template-columns: 1fr;
+			}
+			
+			.customer-info {
+				flex-direction: column;
+				text-align: center;
+			}
+		}
+	</style>
 </html>
