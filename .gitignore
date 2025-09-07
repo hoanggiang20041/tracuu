@@ -1,0 +1,33 @@
+# Bảo vệ thông tin nhạy cảm
+config.js
+config.json
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+logs/
+
+# Dependencies
+node_modules/
+npm-debug.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp

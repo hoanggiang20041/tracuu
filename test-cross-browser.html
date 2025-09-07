@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Cross-Browser Sync</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .step {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        .code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border-left-color: #ffc107;
+            border: 1px solid #ffc107;
+        }
+        .success {
+            background: rgba(40, 167, 69, 0.2);
+            border-left-color: #28a745;
+            border: 1px solid #28a745;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Test Cross-Browser Sync</h1>
+        <p>Hướng dẫn test đồng bộ 2FA giữa các trình duyệt trên localhost</p>
+        
+        <div class="step">
+            <h3>📋 Bước 1: Mở 2 trình duyệt</h3>
+            <p>Mở 2 trình duyệt khác nhau (Chrome, Firefox, Edge, etc.) và truy cập:</p>
+            <div class="code">http://127.0.0.1:5500/security.html</div>
+        </div>
+        
+        <div class="step">
+            <h3>🔐 Bước 2: Đăng nhập cả 2 trình duyệt</h3>
+            <p>Đăng nhập với cùng 1 tài khoản admin:</p>
+            <div class="code">
+                Username: admin<br>
+                Password: admin123
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>⚙️ Bước 3: Bật 2FA ở trình duyệt A</h3>
+            <p>Trong trình duyệt A:</p>
+            <ol>
+                <li>Vào tab "2FA"</li>
+                <li>Nhấn "Kích hoạt lại 2FA"</li>
+                <li>Nhập mã từ Google Authenticator</li>
+                <li>Nhấn "Xác nhận"</li>
+            </ol>
+        </div>
+        
+        <div class="step">
+            <h3>🔄 Bước 4: Sync ở trình duyệt B</h3>
+            <p>Trong trình duyệt B:</p>
+            <ol>
+                <li>Vào tab "2FA"</li>
+                <li>Nhấn "Manual Sync" (nút xanh lá)</li>
+                <li>Kiểm tra trạng thái 2FA</li>
+            </ol>
+        </div>
+        
+        <div class="step">
+            <h3>🧪 Bước 5: Test đăng nhập</h3>
+            <p>Mở trình duyệt thứ 3 và test đăng nhập:</p>
+            <ol>
+                <li>Mở <a href="login.html" target="_blank" style="color: #4CAF50;">login.html</a></li>
+                <li>Đăng nhập với admin123</li>
+                <li>Kiểm tra có yêu cầu 2FA không</li>
+            </ol>
+        </div>
+        
+        <div class="step warning">
+            <h3>⚠️ Lưu ý quan trọng</h3>
+            <p><strong>Vấn đề localhost:</strong> Mỗi trình duyệt có localStorage riêng biệt trên localhost. Để sync thực sự, cần:</p>
+            <ul>
+                <li>Sử dụng "Manual Sync" button</li>
+                <li>Hoặc deploy lên web server thực</li>
+                <li>Hoặc sử dụng cùng 1 trình duyệt với nhiều tab</li>
+            </ul>
+        </div>
+        
+        <div class="step success">
+            <h3>✅ Giải pháp tạm thời</h3>
+            <p>Để test đầy đủ, hãy:</p>
+            <ol>
+                <li>Mở <strong>cùng 1 trình duyệt</strong> với 2 tab</li>
+                <li>Tab 1: Bật 2FA</li>
+                <li>Tab 2: Refresh → Sẽ tự động sync</li>
+                <li>Mở tab 3: Test đăng nhập</li>
+            </ol>
+        </div>
+        
+        <div class="status">
+            <h4>🔧 Debug Tools:</h4>
+            <button onclick="window.open('test-global-admin.html', '_blank')">Test Global Admin</button>
+            <button onclick="window.open('debug-2fa.html', '_blank')">Debug 2FA</button>
+            <button onclick="window.open('security.html', '_blank')">Security Page</button>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug 2FA Status</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .debug-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug 2FA Status</h1>
+    
+    <div class="debug-section">
+        <h3>1. Kiểm tra Global 2FA Status</h3>
+        <button onclick="checkGlobal2FA()">Kiểm tra Global 2FA</button>
+        <div id="global-2fa-result"></div>
+    </div>
+
+    <div class="debug-section">
+        <h3>2. Kiểm tra Local Security Data</h3>
+        <button onclick="checkLocalSecurity()">Kiểm tra Local Security</button>
+        <div id="local-security-result"></div>
+    </div>
+
+    <div class="debug-section">
+        <h3>3. Test Authentication</h3>
+        <button onclick="testAuth()">Test Authentication Logic</button>
+        <div id="auth-test-result"></div>
+    </div>
+
+    <div class="debug-section">
+        <h3>4. Force Sync Global 2FA</h3>
+        <button onclick="forceSync()">Force Sync Global 2FA</button>
+        <div id="sync-result"></div>
+    </div>
+
+    <div class="debug-section">
+        <h3>5. Raw Data</h3>
+        <button onclick="showRawData()">Hiển thị Raw Data</button>
+        <div id="raw-data-result"></div>
+    </div>
+
+    <script src="assets/security.js"></script>
+    <script src="assets/auth.js"></script>
+    
+    <script>
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function checkGlobal2FA() {
+            try {
+                // Check localStorage
+                const localGlobal2FA = localStorage.getItem('global_admin_2fa');
+                // Check sessionStorage
+                const sessionGlobal2FA = sessionStorage.getItem('global_admin_2fa');
+                
+                let result = '<h4>Global 2FA Status:</h4>';
+                
+                if (localGlobal2FA) {
+                    const data = JSON.parse(localGlobal2FA);
+                    result += `<div class="success">✅ localStorage: ${JSON.stringify(data, null, 2)}</div>`;
+                } else {
+                    result += `<div class="error">❌ localStorage: Không có global 2FA data</div>`;
+                }
+                
+                if (sessionGlobal2FA) {
+                    const data = JSON.parse(sessionGlobal2FA);
+                    result += `<div class="success">✅ sessionStorage: ${JSON.stringify(data, null, 2)}</div>`;
+                } else {
+                    result += `<div class="error">❌ sessionStorage: Không có global 2FA data</div>`;
+                }
+                
+                // Test function
+                if (window.adminSecurity) {
+                    const global2FA = window.adminSecurity.getGlobal2FAStatus();
+                    if (global2FA) {
+                        result += `<div class="success">✅ getGlobal2FAStatus(): ${JSON.stringify(global2FA, null, 2)}</div>`;
+                    } else {
+                        result += `<div class="error">❌ getGlobal2FAStatus(): null</div>`;
+                    }
+                } else {
+                    result += `<div class="error">❌ adminSecurity not available</div>`;
+                }
+                
+                showResult('global-2fa-result', result, 'info');
+            } catch (error) {
+                showResult('global-2fa-result', `Lỗi: ${error.message}`, 'error');
+            }
+        }
+
+        function checkLocalSecurity() {
+            try {
+                let result = '<h4>Local Security Data:</h4>';
+                
+                // Check localStorage
+                const localSecurity = localStorage.getItem('admin_security_data');
+                if (localSecurity) {
+                    const data = JSON.parse(localSecurity);
+                    result += `<div class="success">✅ localStorage: ${JSON.stringify(data, null, 2)}</div>`;
+                } else {
+                    result += `<div class="error">❌ localStorage: Không có security data</div>`;
+                }
+                
+                // Check sessionStorage
+                const sessionSecurity = sessionStorage.getItem('admin_security_data');
+                if (sessionSecurity) {
+                    const data = JSON.parse(sessionSecurity);
+                    result += `<div class="success">✅ sessionStorage: ${JSON.stringify(data, null, 2)}</div>`;
+                } else {
+                    result += `<div class="error">❌ sessionStorage: Không có security data</div>`;
+                }
+                
+                showResult('local-security-result', result, 'info');
+            } catch (error) {
+                showResult('local-security-result', `Lỗi: ${error.message}`, 'error');
+            }
+        }
+
+        function testAuth() {
+            try {
+                let result = '<h4>Authentication Test:</h4>';
+                
+                if (window.hiddenAuth) {
+                    // Test getGlobal2FAStatus function
+                    const global2FA = window.hiddenAuth.getGlobal2FAStatus();
+                    if (global2FA) {
+                        result += `<div class="success">✅ hiddenAuth.getGlobal2FAStatus(): ${JSON.stringify(global2FA, null, 2)}</div>`;
+                        
+                        // Test if 2FA is enabled
+                        if (global2FA.enabled && global2FA.secret) {
+                            result += `<div class="success">✅ 2FA is ENABLED - should require 2FA code</div>`;
+                        } else {
+                            result += `<div class="error">❌ 2FA is DISABLED - should NOT require 2FA code</div>`;
+                        }
+                    } else {
+                        result += `<div class="error">❌ hiddenAuth.getGlobal2FAStatus(): null</div>`;
+                    }
+                } else {
+                    result += `<div class="error">❌ hiddenAuth not available</div>`;
+                }
+                
+                showResult('auth-test-result', result, 'info');
+            } catch (error) {
+                showResult('auth-test-result', `Lỗi: ${error.message}`, 'error');
+            }
+        }
+
+        function forceSync() {
+            try {
+                let result = '<h4>Force Sync Result:</h4>';
+                
+                if (window.adminSecurity) {
+                    // Get current security data
+                    const currentData = window.adminSecurity.securityData;
+                    if (currentData && currentData.twoFactorEnabled && currentData.twoFactorSecret) {
+                        // Force save global 2FA status
+                        window.adminSecurity.saveGlobal2FAStatus();
+                        result += `<div class="success">✅ Force saved global 2FA status</div>`;
+                        
+                        // Verify it was saved
+                        const global2FA = window.adminSecurity.getGlobal2FAStatus();
+                        if (global2FA) {
+                            result += `<div class="success">✅ Verified: ${JSON.stringify(global2FA, null, 2)}</div>`;
+                        } else {
+                            result += `<div class="error">❌ Failed to verify global 2FA status</div>`;
+                        }
+                    } else {
+                        result += `<div class="error">❌ No 2FA data to sync</div>`;
+                    }
+                } else {
+                    result += `<div class="error">❌ adminSecurity not available</div>`;
+                }
+                
+                showResult('sync-result', result, 'info');
+            } catch (error) {
+                showResult('sync-result', `Lỗi: ${error.message}`, 'error');
+            }
+        }
+
+        function showRawData() {
+            try {
+                let result = '<h4>Raw Data:</h4>';
+                
+                result += '<h5>localStorage:</h5>';
+                result += `<pre>${JSON.stringify({
+                    'admin_security_data': localStorage.getItem('admin_security_data'),
+                    'global_admin_2fa': localStorage.getItem('global_admin_2fa'),
+                    'admin_logged_in': localStorage.getItem('admin_logged_in'),
+                    'admin_login_time': localStorage.getItem('admin_login_time')
+                }, null, 2)}</pre>`;
+                
+                result += '<h5>sessionStorage:</h5>';
+                result += `<pre>${JSON.stringify({
+                    'admin_security_data': sessionStorage.getItem('admin_security_data'),
+                    'global_admin_2fa': sessionStorage.getItem('global_admin_2fa')
+                }, null, 2)}</pre>`;
+                
+                showResult('raw-data-result', result, 'info');
+            } catch (error) {
+                showResult('raw-data-result', `Lỗi: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-check on load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                checkGlobal2FA();
+                checkLocalSecurity();
+                testAuth();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

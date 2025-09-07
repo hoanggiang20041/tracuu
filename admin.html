@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Admin - Quản lý phiếu bảo hành</title>
+	<link rel="stylesheet" href="assets/style.css" />
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+	<style>
+		/* Admin specific styles */
+		.admin-container {
+			max-width: 1400px;
+			margin: 0 auto;
+			padding: 20px;
+		}
+		
+		.admin-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 30px;
+			padding: 20px 0;
+			border-bottom: 2px solid rgba(255,255,255,0.2);
+		}
+		
+		.admin-title {
+			display: flex;
+			align-items: center;
+			gap: 15px;
+		}
+		
+		.admin-title i {
+			font-size: 2.5rem;
+			color: #fff;
+			animation: pulse 2s infinite;
+		}
+		
+		.admin-title h1 {
+			font-size: 2.2rem;
+			font-weight: 700;
+			color: #fff;
+			text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+		}
+		
+		.admin-actions {
+			display: flex;
+			gap: 15px;
+			align-items: center;
+		}
+		
+		.logout-btn {
+			background: rgba(239, 68, 68, 0.9);
+			color: white;
+			border: none;
+			padding: 12px 20px;
+			border-radius: 25px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+		
+		.logout-btn:hover {
+			background: rgba(239, 68, 68, 1);
+			transform: translateY(-2px);
+			box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+		}
+		
+		.back-link {
+			color: #fff;
+			text-decoration: none;
+			font-weight: 500;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			padding: 12px 20px;
+			background: rgba(255,255,255,0.2);
+			border-radius: 25px;
+			backdrop-filter: blur(10px);
+			transition: all 0.3s ease;
+		}
+		
+		.back-link:hover {
+			background: rgba(255,255,255,0.3);
+			transform: translateY(-2px);
+			box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+		}
+		
+		/* Tabs */
+		.admin-tabs {
+			display: flex;
+			gap: 10px;
+			margin-bottom: 30px;
+			background: rgba(255,255,255,0.1);
+			padding: 10px;
+			border-radius: 20px;
+			backdrop-filter: blur(10px);
+		}
+		
+		.tab-btn {
+			background: transparent;
+			color: rgba(255,255,255,0.7);
+			border: none;
+			padding: 12px 24px;
+			border-radius: 15px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+		
+		.tab-btn.active {
+			background: rgba(255,255,255,0.9);
+			color: #333;
+			transform: translateY(-2px);
+		}
+		
+		.tab-btn:hover:not(.active) {
+			background: rgba(255,255,255,0.2);
+			color: #fff;
+		}
+		
+		/* Tab Content */
+		.tab-content {
+			display: none;
+			animation: fadeIn 0.5s ease-out;
+		}
+		
+		.tab-content.active {
+			display: block;
+		}
+		
+		/* Forms */
+		.admin-form {
+			background: rgba(255,255,255,0.95);
+			border-radius: 20px;
+			padding: 30px;
+			box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+			backdrop-filter: blur(20px);
+			margin-bottom: 30px;
+		}
+		
+		.form-title {
+			font-size: 1.5rem;
+			font-weight: 700;
+			color: #333;
+			margin-bottom: 25px;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+		
+		.form-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+			gap: 20px;
+			margin-bottom: 25px;
+		}
+		
+		.form-field {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+		}
+		
+		.form-field label {
+			font-weight: 600;
+			color: #555;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+		
+		.form-field label i {
+			color: #667eea;
+		}
+		
+		.form-field input,
+		.form-field select,
+		.form-field textarea {
+			padding: 15px 20px;
+			border: 2px solid #e1e5e9;
+			border-radius: 12px;
+			font-size: 1rem;
+			transition: all 0.3s ease;
+			background: #fff;
+		}
+		
+		.form-field input:focus,
+		.form-field select:focus,
+		.form-field textarea:focus {
+			outline: none;
+			border-color: #667eea;
+			box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+			transform: translateY(-2px);
+		}
+		
+		.form-field textarea {
+			resize: vertical;
+			min-height: 100px;
+		}
+		
+		.form-actions {
+			display: flex;
+			gap: 15px;
+			justify-content: flex-end;
+		}
+		
+		.btn {
+			padding: 12px 24px;
+			border: none;
+			border-radius: 12px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			font-size: 1rem;
+		}
+		
+		.btn-primary {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+		}
+		
+		.btn-primary:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+		}
+		
+		.btn-secondary {
+			background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+			color: white;
+		}
+		
+		.btn-secondary:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 10px 25px rgba(108, 117, 125, 0.4);
+		}
+		
+		.btn-warning {
+			background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+			color: #212529;
+		}
+		
+		.btn-warning:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 10px 25px rgba(255, 193, 7, 0.4);
+		}
+		
+		.btn-info {
+			background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+			color: white;
+			text-decoration: none;
+		}
+		
+		.btn-info:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 10px 25px rgba(23, 162, 184, 0.4);
+			color: white;
+			text-decoration: none;
+		}
+		
+		/* Tools button special styling */
+		.btn[onclick*="toggleToolsMenu"] {
+			position: relative;
+			overflow: hidden;
+		}
+		
+		.btn[onclick*="toggleToolsMenu"]::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: -100%;
+			width: 100%;
+			height: 100%;
+			background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+			transition: left 0.5s;
+		}
+		
+		.btn[onclick*="toggleToolsMenu"]:hover::before {
+			left: 100%;
+		}
+		
+		.btn-success {
+			background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+			color: white;
+		}
+		
+		.btn-success:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 10px 25px rgba(40, 167, 69, 0.4);
+		}
+		
+		.btn-warning {
+			background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+			color: white;
+		}
+		
+		.btn-warning:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 10px 25px rgba(255, 193, 7, 0.4);
+		}
+		
+		.btn-danger {
+			background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+			color: white;
+		}
+		
+		.btn-danger:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 10px 25px rgba(220, 53, 69, 0.4);
+		}
+		
+		/* Data Tables */
+		.data-table {
+			background: rgba(255,255,255,0.95);
+			border-radius: 20px;
+			overflow: hidden;
+			box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+			backdrop-filter: blur(20px);
+		}
+		
+		.table-header {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+			padding: 20px 30px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+		
+		.table-title {
+			font-size: 1.3rem;
+			font-weight: 600;
+		}
+		
+		.table-actions {
+			display: flex;
+			gap: 10px;
+		}
+		
+		.table-content {
+			overflow-x: auto;
+		}
+		
+		table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+		
+		th, td {
+			padding: 15px 20px;
+			text-align: left;
+			border-bottom: 1px solid #f0f0f0;
+		}
+		
+		th {
+			background: #f8f9fa;
+			font-weight: 600;
+			color: #333;
+		}
+		
+		tr:hover {
+			background: #f8f9fa;
+		}
+		
+		.action-buttons {
+			display: flex;
+			gap: 8px;
+		}
+		
+		.btn-sm {
+			padding: 6px 12px;
+			font-size: 0.8rem;
+		}
+		
+		/* Search and Filter */
+		.table-controls {
+			padding: 20px 30px;
+			background: #f8f9fa;
+			border-bottom: 1px solid #f0f0f0;
+			display: flex;
+			gap: 15px;
+			align-items: center;
+			flex-wrap: wrap;
+			position: relative;
+		}
+		
+		.search-box {
+			flex: 1;
+			min-width: 250px;
+			position: relative;
+		}
+		
+		.search-box input {
+			width: 100%;
+			padding: 12px 20px 12px 45px;
+			border: 2px solid #e1e5e9;
+			border-radius: 25px;
+			font-size: 1rem;
+			transition: all 0.3s ease;
+		}
+		
+		.search-box input:focus {
+			outline: none;
+			border-color: #667eea;
+			box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+		}
+		
+		.search-box i {
+			position: absolute;
+			left: 15px;
+			top: 50%;
+			transform: translateY(-50%);
+			color: #666;
+		}
+		
+		/* Status badges */
+		.status-badge {
+			padding: 4px 12px;
+			border-radius: 20px;
+			font-size: 0.8rem;
+			font-weight: 600;
+			text-transform: uppercase;
+		}
+		
+		.status-badge.active {
+			background: #d4edda;
+			color: #155724;
+		}
+		
+		.status-badge.expired {
+			background: #f8d7da;
+			color: #721c24;
+		}
+		
+		/* Responsive */
+		@media (max-width: 768px) {
+			.admin-header {
+				flex-direction: column;
+				gap: 20px;
+				text-align: center;
+			}
+			
+			.admin-title h1 {
+				font-size: 1.8rem;
+			}
+			
+			.admin-tabs {
+				flex-direction: column;
+			}
+			
+			.form-grid {
+				grid-template-columns: 1fr;
+			}
+			
+			.form-actions {
+				flex-direction: column;
+			}
+			
+			.table-controls {
+				flex-direction: column;
+				align-items: stretch;
+			}
+			
+			.search-box {
+				min-width: auto;
+			}
+		}
+		
+		/* Loading states */
+		.loading {
+			opacity: 0.6;
+			pointer-events: none;
+		}
+		
+		.loading::after {
+			content: '';
+			position: absolute;
+			width: 20px;
+			height: 20px;
+			border: 2px solid transparent;
+			border-top: 2px solid currentColor;
+			border-radius: 50%;
+			animation: spin 1s linear infinite;
+		}
+		
+		/* Hidden class */
+		.hidden {
+			display: none !important;
+		}
+		
+		/* Mini Tools Menu */
+		.tools-menu {
+			position: absolute;
+			top: 100%;
+			right: 0;
+			background: white;
+			border-radius: 20px;
+			box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+			padding: 15px;
+			min-width: 200px;
+			max-height: 300px;
+			overflow-y: auto;
+			z-index: 1000;
+			transform: scale(0.8);
+			opacity: 0;
+			transform-origin: top right;
+			transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+			border: 2px solid #f0f0f0;
+			visibility: hidden;
+		}
+		
+		.tools-menu.show {
+			display: block !important;
+			transform: scale(1);
+			opacity: 1;
+			visibility: visible;
+		}
+		
+		.tools-menu-item {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			padding: 12px 16px;
+			border-radius: 12px;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			margin-bottom: 8px;
+			font-weight: 500;
+			color: #555;
+			min-height: 44px;
+			box-sizing: border-box;
+		}
+		
+		.tools-menu-item:last-child {
+			margin-bottom: 0;
+		}
+		
+		.tools-menu-item:nth-child(3) {
+			background: rgba(23, 162, 184, 0.1);
+			border: 1px solid rgba(23, 162, 184, 0.2);
+		}
+		
+		/* Debug styles to make all items visible */
+		.tools-menu-item:nth-child(1) {
+			border: 1px solid rgba(255, 193, 7, 0.3);
+		}
+		
+		.tools-menu-item:nth-child(2) {
+			border: 1px solid rgba(220, 53, 69, 0.3);
+		}
+		
+		.tools-menu-item:nth-child(3) {
+			border: 1px solid rgba(23, 162, 184, 0.3);
+		}
+		
+		.tools-menu-item:hover {
+			background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+			transform: translateX(5px);
+			color: #333;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+		}
+		
+		.tools-menu-item i {
+			font-size: 1.1rem;
+			width: 20px;
+			text-align: center;
+		}
+		
+		.tools-menu-item:nth-child(1) i {
+			color: #ffc107;
+		}
+		
+		.tools-menu-item:nth-child(2) i {
+			color: #dc3545;
+		}
+		
+		.tools-menu-item:nth-child(3) i {
+			color: #17a2b8;
+		}
+		
+		.tools-menu-item span {
+			font-size: 0.9rem;
+		}
+		
+		/* Arrow indicator */
+		.tools-menu::before {
+			content: '';
+			position: absolute;
+			top: -8px;
+			right: 20px;
+			width: 0;
+			height: 0;
+			border-left: 8px solid transparent;
+			border-right: 8px solid transparent;
+			border-bottom: 8px solid white;
+		}
+		
+		/* Responsive for tools menu */
+		@media (max-width: 768px) {
+			.tools-menu {
+				right: -50px;
+				min-width: 180px;
+			}
+		}
+		
+	</style>
+</head>
+<body>
+	<div class="admin-container">
+		<!-- Header -->
+		<header class="admin-header">
+			<div class="admin-title">
+				<i class="fas fa-shield-alt"></i>
+				<h1>Quản lý phiếu bảo hành</h1>
+			</div>
+			<div class="admin-actions">
+				<a href="index.html" class="back-link">
+					<i class="fas fa-home"></i>
+					Về trang chính
+				</a>
+				<button class="logout-btn" onclick="logout()">
+					<i class="fas fa-sign-out-alt"></i>
+					Đăng xuất
+				</button>
+			</div>
+		</header>
+
+		<!-- Tabs -->
+		<div class="admin-tabs">
+			<button class="tab-btn active" onclick="showTab('warranty', this)">
+				<i class="fas fa-file-contract"></i>
+				Phiếu bảo hành
+			</button>
+			<button class="tab-btn" onclick="showTab('customers', this)">
+				<i class="fas fa-users"></i>
+				Khách hàng
+			</button>
+			<button class="tab-btn" onclick="showTab('add', this)">
+				<i class="fas fa-plus-circle"></i>
+				Thêm mới
+			</button>
+		</div>
+
+		<!-- Tab Content: Phiếu bảo hành -->
+		<div id="warranty-tab" class="tab-content active">
+			<div class="data-table">
+				<div class="table-header">
+					<h2 class="table-title">Danh sách phiếu bảo hành</h2>
+					<div class="table-actions">
+						<button class="btn btn-primary" onclick="refreshWarranties()">
+							<i class="fas fa-sync-alt"></i>
+							Làm mới
+						</button>
+					</div>
+				</div>
+				<div class="table-controls">
+					<div class="search-box">
+						<i class="fas fa-search"></i>
+						<input type="text" id="warranty-search" placeholder="Tìm kiếm phiếu bảo hành..." />
+					</div>
+					<select id="warranty-filter" onchange="filterWarranties()">
+						<option value="">Tất cả trạng thái</option>
+						<option value="active">Đang hiệu lực</option>
+						<option value="expired">Hết hạn</option>
+					</select>
+					<button class="btn btn-primary" onclick="toggleToolsMenu()" title="Công cụ quản lý dữ liệu">
+						<i class="fas fa-tools"></i>
+						Công cụ
+					</button>
+					<button class="btn btn-secondary" onclick="checkAdminFunctions()" title="Kiểm tra chức năng">
+						<i class="fas fa-info-circle"></i>
+						Check
+					</button>
+					<button class="btn btn-warning" onclick="testToolsMenu()" title="Test menu items">
+						<i class="fas fa-list"></i>
+						Test Menu
+					</button>
+					<a href="security.html" class="btn btn-info" title="Quản lý bảo mật">
+						<i class="fas fa-shield-alt"></i>
+						Bảo mật
+					</a>
+					
+					<!-- Mini Tools Menu -->
+					<div id="tools-menu" class="tools-menu hidden">
+						<div class="tools-menu-item" onclick="safeExecute('checkDuplicateIds'); closeToolsMenu();">
+							<i class="fas fa-exclamation-triangle"></i>
+							<span>Kiểm tra trùng lặp</span>
+						</div>
+						<div class="tools-menu-item" onclick="safeExecute('cleanupDuplicateData'); closeToolsMenu();">
+							<i class="fas fa-broom"></i>
+							<span>Dọn dẹp</span>
+						</div>
+						<div class="tools-menu-item" onclick="safeExecute('validateAndFixData'); closeToolsMenu();">
+							<i class="fas fa-check-circle"></i>
+							<span>Kiểm tra dữ liệu</span>
+						</div>
+					</div>
+				</div>
+				<div class="table-content">
+					<table id="warranty-table">
+						<thead>
+							<tr>
+								<th>Khách hàng</th>
+								<th>ID</th>
+								<th>Tiêu đề</th>
+								<th>Ngày bắt đầu</th>
+								<th>Ngày kết thúc</th>
+								<th>Trạng thái</th>
+								<th>Thao tác</th>
+							</tr>
+						</thead>
+						<tbody id="warranty-tbody">
+							<!-- Data will be loaded here -->
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<!-- Tab Content: Khách hàng -->
+		<div id="customers-tab" class="tab-content">
+			<div class="data-table">
+				<div class="table-header">
+					<h2 class="table-title">Danh sách khách hàng</h2>
+					<div class="table-actions">
+						<button class="btn btn-primary" onclick="refreshCustomers()">
+							<i class="fas fa-sync-alt"></i>
+							Làm mới
+						</button>
+					</div>
+				</div>
+				<div class="table-controls">
+					<div class="search-box">
+						<i class="fas fa-search"></i>
+						<input type="text" id="customer-search" placeholder="Tìm kiếm khách hàng..." />
+					</div>
+				</div>
+				<div class="table-content">
+					<table id="customer-table">
+						<thead>
+							<tr>
+								<th>ID</th>
+								<th>Tên khách hàng</th>
+								<th>Số phiếu bảo hành</th>
+								<th>Thao tác</th>
+							</tr>
+						</thead>
+						<tbody id="customer-tbody">
+							<!-- Data will be loaded here -->
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<!-- Tab Content: Thêm mới -->
+		<div id="add-tab" class="tab-content">
+			<div class="admin-form">
+				<h3 class="form-title">
+					<i class="fas fa-plus-circle"></i>
+					Thêm phiếu bảo hành mới
+				</h3>
+				<form id="add-warranty-form" onsubmit="return false;" method="post">
+					<div class="form-grid">
+						<div class="form-field">
+							<label for="customer-id">
+								<i class="fas fa-id-card"></i>
+								ID khách hàng <span style="color: #e74c3c;">*</span>
+							</label>
+							<input id="customer-id" name="customer-id" type="text" placeholder="VD: KH001" required />
+						</div>
+						
+						<div class="form-field">
+							<label for="customer-name">
+								<i class="fas fa-user"></i>
+								Tên khách hàng <span style="color: #e74c3c;">*</span>
+							</label>
+							<input id="customer-name" name="customer-name" type="text" placeholder="VD: Nguyễn Văn A" required />
+						</div>
+						
+						<div class="form-field">
+							<label for="warranty-title">
+								<i class="fas fa-file-contract"></i>
+								Tiêu đề bảo hành <span style="color: #e74c3c;">*</span>
+							</label>
+							<input id="warranty-title" name="warranty-title" type="text" placeholder="VD: Bảo hành điện thoại" required />
+						</div>
+						
+						<div class="form-field">
+							<label for="warranty-image">
+								<i class="fas fa-image"></i>
+								Hình ảnh phiếu bảo hành
+							</label>
+							<input id="warranty-image" name="warranty-image" type="file" accept="image/*" />
+						</div>
+						
+						<div class="form-field">
+							<label for="start-date">
+								<i class="fas fa-calendar-alt"></i>
+								Ngày bắt đầu
+							</label>
+							<input id="start-date" name="start-date" type="date" />
+						</div>
+						
+						<div class="form-field">
+							<label for="end-date">
+								<i class="fas fa-calendar-check"></i>
+								Ngày kết thúc
+							</label>
+							<input id="end-date" name="end-date" type="date" />
+						</div>
+					</div>
+					
+					<div class="form-field">
+						<label for="warranty-notes">
+							<i class="fas fa-sticky-note"></i>
+							Ghi chú
+						</label>
+						<textarea id="warranty-notes" name="warranty-notes" placeholder="Ghi chú thêm về phiếu bảo hành..."></textarea>
+					</div>
+					
+					<div class="form-actions">
+						<button type="button" class="btn btn-warning" onclick="resetForm()">
+							<i class="fas fa-undo"></i>
+							Làm mới
+						</button>
+						<button type="submit" class="btn btn-success">
+							<i class="fas fa-save"></i>
+							Lưu phiếu bảo hành
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		// Kiểm tra quyền truy cập admin
+		function checkAdminAccess() {
+			const isLoggedIn = localStorage.getItem("admin_logged_in");
+			const loginTime = localStorage.getItem("admin_login_time");
+			
+			if (!isLoggedIn || isLoggedIn !== "true") {
+				alert("Bạn cần đăng nhập để truy cập trang admin!");
+				window.location.href = "login.html";
+				return false;
+			}
+			
+			const now = Date.now();
+			const loginTimestamp = parseInt(loginTime);
+			const sessionTimeout = 24 * 60 * 60 * 1000; // 24 giờ
+			
+			if (now - loginTimestamp > sessionTimeout) {
+				alert("Phiên đăng nhập đã hết hạn! Vui lòng đăng nhập lại.");
+				localStorage.removeItem("admin_logged_in");
+				localStorage.removeItem("admin_login_time");
+				window.location.href = "login.html";
+				return false;
+			}
+			
+			return true;
+		}
+		
+		// Tab management
+		function showTab(tabName, clickedElement = null) {
+			// Hide all tabs
+			document.querySelectorAll('.tab-content').forEach(tab => {
+				tab.classList.remove('active');
+			});
+			document.querySelectorAll('.tab-btn').forEach(btn => {
+				btn.classList.remove('active');
+			});
+			
+			// Show selected tab
+			document.getElementById(tabName + '-tab').classList.add('active');
+			
+			// Nếu có element được click, thêm active class
+			if (clickedElement) {
+				clickedElement.classList.add('active');
+			} else {
+				// Nếu không có element, tìm button tương ứng và active
+				const tabButton = document.querySelector(`[onclick*="showTab('${tabName}')"]`);
+				if (tabButton) {
+					tabButton.classList.add('active');
+				}
+			}
+			
+			// Chỉ load dữ liệu lần đầu, không load lại mỗi lần chuyển tab
+			// Dữ liệu sẽ được load từ admin.js khi khởi tạo
+		}
+		
+		// Logout function
+		function logout() {
+			localStorage.removeItem("admin_logged_in");
+			localStorage.removeItem("admin_login_time");
+			window.location.href = "login.html";
+		}
+		
+		// Form reset - Sẽ được implement trong admin.js
+		function resetForm() {
+			// Placeholder - sẽ được override bởi admin.js
+			console.log("resetForm called from admin.html");
+		}
+		
+		// Load warranties data - Sẽ được implement trong admin.js
+		async function loadWarranties() {
+			// Placeholder - sẽ được override bởi admin.js
+			console.log("loadWarranties called from admin.html");
+		}
+		
+		// Load customers data - Sẽ được implement trong admin.js
+		async function loadCustomers() {
+			// Placeholder - sẽ được override bởi admin.js
+			console.log("loadCustomers called from admin.html");
+		}
+		
+		// Refresh functions - Sẽ được implement trong admin.js
+		function refreshWarranties() {
+			// Placeholder - sẽ được override bởi admin.js
+			console.log("refreshWarranties called from admin.html");
+		}
+		
+		function refreshCustomers() {
+			// Placeholder - sẽ được override bởi admin.js
+			console.log("refreshCustomers called from admin.html");
+		}
+		
+		// Search and filter functions - Sẽ được implement trong admin.js
+		function filterWarranties() {
+			// Placeholder - sẽ được override bởi admin.js
+			console.log("filterWarranties called from admin.html");
+		}
+		
+		// Toggle tools menu
+		function toggleToolsMenu() {
+			console.log('toggleToolsMenu called');
+			const toolsMenu = document.getElementById('tools-menu');
+			console.log('Tools menu element:', toolsMenu);
+			
+			if (toolsMenu) {
+				// Remove hidden class first, then toggle show
+				toolsMenu.classList.remove('hidden');
+				toolsMenu.classList.toggle('show');
+				console.log('Menu classes after toggle:', toolsMenu.className);
+			} else {
+				console.error('Tools menu not found!');
+			}
+		}
+		
+		// Close tools menu
+		function closeToolsMenu() {
+			const toolsMenu = document.getElementById('tools-menu');
+			if (toolsMenu) {
+				toolsMenu.classList.remove('show');
+				toolsMenu.classList.add('hidden');
+			}
+		}
+		
+		// Safe execute function with fallback
+		function safeExecute(functionName) {
+			console.log(`Attempting to execute: ${functionName}`);
+			
+			if (typeof window[functionName] === 'function') {
+				console.log(`Function ${functionName} found, executing...`);
+				try {
+					window[functionName]();
+				} catch (error) {
+					console.error(`Error executing ${functionName}:`, error);
+					alert(`Lỗi thực hiện ${functionName}: ${error.message}`);
+				}
+			} else {
+				console.warn(`Function ${functionName} not found!`);
+				alert(`Chức năng "${functionName}" chưa sẵn sàng. Vui lòng đợi admin.js load xong.`);
+			}
+		}
+		
+		// Close tools menu when clicking outside
+		document.addEventListener('click', function(event) {
+			const toolsMenu = document.getElementById('tools-menu');
+			const toolsButton = event.target.closest('[onclick*="toggleToolsMenu"]');
+			
+			if (toolsMenu && !toolsMenu.contains(event.target) && !toolsButton) {
+				toolsMenu.classList.remove('show');
+				toolsMenu.classList.add('hidden');
+			}
+		});
+		
+		// Test function to check if menu is working
+		function testToolsMenu() {
+			console.log('Testing tools menu...');
+			const toolsMenu = document.getElementById('tools-menu');
+			console.log('Menu element:', toolsMenu);
+			console.log('Menu classes:', toolsMenu ? toolsMenu.className : 'Not found');
+			console.log('Menu style display:', toolsMenu ? window.getComputedStyle(toolsMenu).display : 'Not found');
+			console.log('Menu style visibility:', toolsMenu ? window.getComputedStyle(toolsMenu).visibility : 'Not found');
+			console.log('Menu style opacity:', toolsMenu ? window.getComputedStyle(toolsMenu).opacity : 'Not found');
+			
+			// Check menu items
+			if (toolsMenu) {
+				const items = toolsMenu.querySelectorAll('.tools-menu-item');
+				console.log('Number of menu items found:', items.length);
+				items.forEach((item, index) => {
+					console.log(`Item ${index + 1}:`, item.textContent.trim());
+					console.log(`Item ${index + 1} style:`, window.getComputedStyle(item).display);
+				});
+			}
+		}
+		
+		// Check admin.js functions availability
+		function checkAdminFunctions() {
+			const functions = ['checkDuplicateIds', 'cleanupDuplicateData', 'validateAndFixData'];
+			const available = [];
+			const missing = [];
+			
+			functions.forEach(func => {
+				if (typeof window[func] === 'function') {
+					available.push(func);
+				} else {
+					missing.push(func);
+				}
+			});
+			
+			console.log('Available functions:', available);
+			console.log('Missing functions:', missing);
+			
+			if (missing.length > 0) {
+				console.warn('Some admin functions are not loaded yet. Missing:', missing);
+			}
+			
+			return { available, missing };
+		}
+		
+		// Initialize page
+		document.addEventListener('DOMContentLoaded', function() {
+			if (!checkAdminAccess()) {
+				return;
+			}
+			
+			console.log("Admin page initialized - waiting for admin.js to load...");
+			
+			// Test tools menu and admin functions after a short delay
+			setTimeout(() => {
+				testToolsMenu();
+				checkAdminFunctions();
+			}, 1000);
+			
+			// Check again after admin.js loads
+			setTimeout(() => {
+				checkAdminFunctions();
+			}, 3000);
+			
+			// Không thêm event listeners ở đây, để admin.js xử lý tất cả
+			// admin.js sẽ được load và khởi tạo sau
+		});
+	</script>
+	
+	<!-- Load admin.js only if user is authenticated -->
+	<script>
+		if (checkAdminAccess()) {
+			console.log("Loading admin.js...");
+			const script = document.createElement("script");
+			script.src = "assets/admin.js";
+			script.onload = function() {
+				console.log("admin.js loaded successfully");
+			};
+			script.onerror = function() {
+				console.error("Failed to load admin.js");
+			};
+			document.head.appendChild(script);
+		} else {
+			console.log("User not authenticated, admin.js not loaded");
+		}
+	</script>
+</body>
+</html>

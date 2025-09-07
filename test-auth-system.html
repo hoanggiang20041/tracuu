@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Auth System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border: 1px solid #28a745;
+        }
+        .error {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+            border: 1px solid #dc3545;
+        }
+        .info {
+            background: rgba(23, 162, 184, 0.2);
+            color: #17a2b8;
+            border: 1px solid #17a2b8;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Test Auth System</h1>
+        <p>Kiểm tra hệ thống xác thực và đổi mật khẩu</p>
+        
+        <div class="test-section">
+            <h3>1. Kiểm tra Auth System</h3>
+            <button onclick="checkAuthSystem()">Kiểm tra Auth System</button>
+            <div id="auth-system-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>2. Test Đổi Mật Khẩu</h3>
+            <form id="test-password-form">
+                <div class="form-group">
+                    <label for="test-old-password">Mật khẩu cũ:</label>
+                    <input type="password" id="test-old-password" value="admin123" required>
+                </div>
+                <div class="form-group">
+                    <label for="test-new-password">Mật khẩu mới:</label>
+                    <input type="password" id="test-new-password" value="admin456" required>
+                </div>
+                <button type="submit">Test Đổi Mật Khẩu</button>
+            </form>
+            <div id="password-change-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>3. Test Xác Thực</h3>
+            <form id="test-verify-form">
+                <div class="form-group">
+                    <label for="test-verify-password">Mật khẩu để test:</label>
+                    <input type="password" id="test-verify-password" value="admin123" required>
+                </div>
+                <button type="submit">Test Xác Thực</button>
+            </form>
+            <div id="verify-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>4. Reset Global Admin</h3>
+            <button onclick="resetGlobalAdmin()" style="background: #dc3545;">Reset Global Admin Account</button>
+            <div id="reset-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>5. Debug Info</h3>
+            <button onclick="showDebugInfo()">Hiển thị Debug Info</button>
+            <div id="debug-info-result"></div>
+        </div>
+    </div>
+
+    <script src="assets/auth.js"></script>
+    <script src="assets/security.js"></script>
+    
+    <script>
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function checkAuthSystem() {
+            try {
+                let result = '<h4>Auth System Status:</h4>';
+                
+                // Check if hiddenAuth exists
+                if (window.hiddenAuth) {
+                    result += '<div class="success">✅ window.hiddenAuth: Available</div>';
+                    
+                    // Check methods
+                    const methods = ['verify', 'changePassword', 'getGlobalAdminData'];
+                    methods.forEach(method => {
+                        if (typeof window.hiddenAuth[method] === 'function') {
+                            result += `<div class="success">✅ hiddenAuth.${method}(): Available</div>`;
+                        } else {
+                            result += `<div class="error">❌ hiddenAuth.${method}(): Missing</div>`;
+                        }
+                    });
+                    
+                    // Check global admin data
+                    const globalAdmin = window.hiddenAuth.getGlobalAdminData();
+                    if (globalAdmin) {
+                        result += `<div class="success">✅ Global Admin Data: ${JSON.stringify(globalAdmin, null, 2)}</div>`;
+                    } else {
+                        result += '<div class="error">❌ Global Admin Data: Not found</div>';
+                    }
+                } else {
+                    result += '<div class="error">❌ window.hiddenAuth: Not available</div>';
+                    
+                    // Try to create it
+                    try {
+                        window.hiddenAuth = new HiddenAuth();
+                        result += '<div class="success">✅ Successfully created hiddenAuth instance</div>';
+                    } catch (error) {
+                        result += `<div class="error">❌ Failed to create hiddenAuth: ${error.message}</div>`;
+                    }
+                }
+                
+                showResult('auth-system-result', result, 'info');
+            } catch (error) {
+                showResult('auth-system-result', `Lỗi: ${error.message}`, 'error');
+            }
+        }
+
+        // Test password change form
+        document.getElementById('test-password-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const oldPassword = document.getElementById('test-old-password').value;
+            const newPassword = document.getElementById('test-new-password').value;
+            
+            if (!window.hiddenAuth) {
+                showResult('password-change-result', 'hiddenAuth not available!', 'error');
+                return;
+            }
+            
+            try {
+                const result = window.hiddenAuth.changePassword(oldPassword, newPassword);
+                if (result.success) {
+                    showResult('password-change-result', `✅ ${result.message}`, 'success');
+                } else {
+                    showResult('password-change-result', `❌ ${result.message}`, 'error');
+                }
+            } catch (error) {
+                showResult('password-change-result', `Lỗi: ${error.message}`, 'error');
+            }
+        });
+
+        // Test verify form
+        document.getElementById('test-verify-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const password = document.getElementById('test-verify-password').value;
+            
+            if (!window.hiddenAuth) {
+                showResult('verify-result', 'hiddenAuth not available!', 'error');
+                return;
+            }
+            
+            try {
+                const result = window.hiddenAuth.verify(password);
+                if (result.success) {
+                    showResult('verify-result', `✅ ${result.message}`, 'success');
+                } else {
+                    showResult('verify-result', `❌ ${result.message}`, 'error');
+                }
+            } catch (error) {
+                showResult('verify-result', `Lỗi: ${error.message}`, 'error');
+            }
+        });
+
+        function resetGlobalAdmin() {
+            if (!window.hiddenAuth) {
+                showResult('reset-result', 'hiddenAuth not available!', 'error');
+                return;
+            }
+            
+            if (confirm('Bạn có chắc chắn muốn reset global admin account? Điều này sẽ tạo lại hash mật khẩu đúng!')) {
+                try {
+                    const result = window.hiddenAuth.resetGlobalAdminAccount();
+                    if (result.success) {
+                        showResult('reset-result', `✅ ${result.message}`, 'success');
+                        // Refresh page after 2 seconds
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    } else {
+                        showResult('reset-result', `❌ ${result.message}`, 'error');
+                    }
+                } catch (error) {
+                    showResult('reset-result', `Lỗi: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        function showDebugInfo() {
+            try {
+                let result = '<h4>Debug Information:</h4>';
+                
+                result += '<h5>Window Objects:</h5>';
+                result += `<pre>${JSON.stringify({
+                    'window.hiddenAuth': !!window.hiddenAuth,
+                    'window.adminSecurity': !!window.adminSecurity,
+                    'window.HiddenAuth': !!window.HiddenAuth,
+                    'window.AdminSecurity': !!window.AdminSecurity
+                }, null, 2)}</pre>`;
+                
+                result += '<h5>Scripts Loaded:</h5>';
+                const scripts = Array.from(document.scripts).map(s => s.src || s.textContent.substring(0, 50) + '...');
+                result += `<pre>${JSON.stringify(scripts, null, 2)}</pre>`;
+                
+                result += '<h5>LocalStorage:</h5>';
+                result += `<pre>${JSON.stringify({
+                    'global_admin_account': localStorage.getItem('global_admin_account'),
+                    'global_admin_2fa': localStorage.getItem('global_admin_2fa'),
+                    'admin_security_data': localStorage.getItem('admin_security_data')
+                }, null, 2)}</pre>`;
+                
+                showResult('debug-info-result', result, 'info');
+            } catch (error) {
+                showResult('debug-info-result', `Lỗi: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-check on load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                checkAuthSystem();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý bảo mật Admin</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- TOTPAuth library -->
+    <script src="assets/totp-auth.js"></script>
+    <!-- otplib as fallback -->
+    <script src="https://cdn.jsdelivr.net/npm/otplib@12.0.1/otplib-browser.js"></script>
+    <!-- Remote JSONBin store -->
+    <script src="assets/remote-store.js"></script>
+    <!-- Production: silence console & basic hardening -->
+    <script>
+      (function(){
+        var PROD = true; if(!PROD) return;
+        var noop=function(){}; ['log','info','warn','error','debug','table','trace'].forEach(function(k){try{console[k]=noop;}catch(e){}});
+        window.addEventListener('error',function(e){e.preventDefault();return false;},true);
+        window.addEventListener('unhandledrejection',function(e){e.preventDefault();return false;},true);
+        document.addEventListener('contextmenu',function(e){e.preventDefault();});
+        document.addEventListener('keydown',function(e){
+          var k=e.key.toLowerCase();
+          if(k==='f12'||((e.ctrlKey||e.metaKey)&&(['s','u','p'].indexOf(k)>-1))){e.preventDefault();}
+        });
+      })();
+    </script>
+    <!-- Auth system -->
+    <script src="assets/auth.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .security-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .security-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .security-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .security-header p {
+            opacity: 0.8;
+            font-size: 1.1rem;
+        }
+
+        .security-nav {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .nav-item {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .nav-item.active {
+            background: white;
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+
+        .nav-item:hover {
+            background: #e9ecef;
+        }
+
+        .nav-item i {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .security-content {
+            padding: 40px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .security-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid #e9ecef;
+        }
+
+        .security-card h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(231, 76, 60, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(39, 174, 96, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(243, 156, 18, 0.4);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .status-enabled {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-disabled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .qr-code-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .qr-code {
+            display: inline-block;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .session-item, .device-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .session-info, .device-info {
+            flex: 1;
+        }
+
+        .session-info h4, .device-info h4 {
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .session-info p, .device-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .session-actions, .device-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.9);
+            color: #667eea;
+            border: none;
+            border-radius: 50px;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .back-btn:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: #27ae60;
+        }
+
+        .notification.error {
+            background: #e74c3c;
+        }
+
+        .notification.warning {
+            background: #f39c12;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .security-nav {
+                flex-direction: column;
+            }
+            
+            .session-item, .device-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="back-btn" onclick="goBack()">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+
+    <div class="security-container">
+        <div class="security-header">
+            <h1><i class="fas fa-shield-alt"></i> Quản lý bảo mật</h1>
+            <p>Bảo vệ tài khoản admin với các tính năng bảo mật nâng cao</p>
+        </div>
+
+        <div class="security-nav">
+            <div class="nav-item active" onclick="showTab('overview')">
+                <i class="fas fa-chart-line"></i>
+                Tổng quan
+            </div>
+            <div class="nav-item" onclick="showTab('2fa')">
+                <i class="fas fa-mobile-alt"></i>
+                2FA
+            </div>
+            <div class="nav-item" onclick="showTab('password')">
+                <i class="fas fa-key"></i>
+                Mật khẩu
+            </div>
+            <div class="nav-item" onclick="showTab('sessions')">
+                <i class="fas fa-desktop"></i>
+                Phiên đăng nhập
+            </div>
+            <div class="nav-item" onclick="showTab('devices')">
+                <i class="fas fa-laptop"></i>
+                Thiết bị tin cậy
+            </div>
+        </div>
+
+        <div class="security-content">
+            <!-- Overview Tab -->
+            <div id="overview-tab" class="tab-content active">
+                <div class="grid-2">
+                    <div class="security-card">
+                        <h3><i class="fas fa-shield-alt"></i> Trạng thái bảo mật</h3>
+                        <div id="security-status">
+                            <!-- Security status will be loaded here -->
+                        </div>
+                    </div>
+                    <div class="security-card">
+                        <h3><i class="fas fa-chart-bar"></i> Thống kê</h3>
+                        <div id="security-stats">
+                            <!-- Security stats will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2FA Tab -->
+            <div id="2fa-tab" class="tab-content">
+                <div class="security-card">
+                    <h3><i class="fas fa-mobile-alt"></i> Xác thực 2 yếu tố (2FA)</h3>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label><i class="fas fa-database"></i> Đồng bộ qua Proxy an toàn</label>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <span class="badge" style="background:#28a745; color:#fff; padding:6px 10px; border-radius:6px;">Đã bật</span>
+                            <button class="btn btn-secondary" onclick="manualRemoteSync()">Đồng bộ ngay</button>
+                        </div>
+                        <small id="jsonbin-status" style="color: #6c757d;">Kênh: /api/admin-state (server-side)</small>
+                    </div>
+                    <div id="2fa-status">
+                        <!-- 2FA status will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password Tab -->
+            <div id="password-tab" class="tab-content">
+                <div class="security-card">
+                    <h3><i class="fas fa-key"></i> Thay đổi mật khẩu</h3>
+                    <form id="change-password-form">
+                        <div class="form-group">
+                            <label for="old-password">Mật khẩu hiện tại</label>
+                            <input type="password" id="old-password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-password">Mật khẩu mới</label>
+                            <input type="password" id="new-password" required minlength="8">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm-password">Xác nhận mật khẩu mới</label>
+                            <input type="password" id="confirm-password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Thay đổi mật khẩu
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Sessions Tab -->
+            <div id="sessions-tab" class="tab-content">
+                <div class="security-card">
+                    <h3><i class="fas fa-desktop"></i> Phiên đăng nhập hiện tại</h3>
+                    <div id="sessions-list">
+                        <!-- Sessions will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Devices Tab -->
+            <div id="devices-tab" class="tab-content">
+                <div class="security-card">
+                    <h3><i class="fas fa-laptop"></i> Thiết bị tin cậy</h3>
+                    <div class="form-group">
+                        <label for="device-name">Tên thiết bị</label>
+                        <input type="text" id="device-name" placeholder="Ví dụ: Laptop công ty">
+                        <button onclick="addTrustedDevice()" class="btn btn-success">
+                            <i class="fas fa-plus"></i>
+                            Thêm thiết bị tin cậy
+                        </button>
+                    </div>
+                    <div id="devices-list">
+                        <!-- Devices will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script src="assets/security.js"></script>
+    <script>
+        // Tab management
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+            
+            // Load tab content
+            loadTabContent(tabName);
+        }
+
+        // Load tab content
+        function loadTabContent(tabName) {
+            switch(tabName) {
+                case 'overview':
+                    loadSecurityOverview();
+                    break;
+                case '2fa':
+                    load2FAStatus();
+                    break;
+                case 'sessions':
+                    loadSessions();
+                    break;
+                case 'devices':
+                    loadDevices();
+                    break;
+            }
+        }
+
+        // Load security overview
+        function loadSecurityOverview() {
+            const status = window.adminSecurity.getSecurityStatus();
+            
+            const statusHTML = `
+                <div style="margin-bottom: 20px;">
+                    <strong>2FA:</strong> 
+                    <span class="status-badge ${status.twoFactorEnabled ? 'status-enabled' : 'status-disabled'}">
+                        ${status.twoFactorEnabled ? 'Đã kích hoạt' : 'Chưa kích hoạt'}
+                    </span>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <strong>Phiên đăng nhập:</strong> ${status.activeSessions}
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <strong>Thiết bị tin cậy:</strong> ${status.trustedDevices}
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <strong>Thiết bị hiện tại:</strong> 
+                    <span class="status-badge ${status.isCurrentDeviceTrusted ? 'status-enabled' : 'status-disabled'}">
+                        ${status.isCurrentDeviceTrusted ? 'Tin cậy' : 'Chưa tin cậy'}
+                    </span>
+                </div>
+            `;
+            
+            document.getElementById('security-status').innerHTML = statusHTML;
+            
+            const statsHTML = `
+                <div style="margin-bottom: 20px;">
+                    <strong>Lần đổi mật khẩu cuối:</strong><br>
+                    ${status.lastPasswordChange ? window.adminSecurity.formatTime(status.lastPasswordChange) : 'Chưa có'}
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <strong>Thời gian hoạt động:</strong><br>
+                    ${window.adminSecurity.formatDuration(status.lastPasswordChange || Date.now())}
+                </div>
+            `;
+            
+            document.getElementById('security-stats').innerHTML = statsHTML;
+        }
+
+        // Load 2FA status
+        function load2FAStatus() {
+            const status = window.adminSecurity.getSecurityStatus();
+            const hasSecret = window.adminSecurity.securityData.twoFactorSecret;
+            
+            if (status.twoFactorEnabled) {
+                document.getElementById('2fa-status').innerHTML = `
+                    <div style="text-align: center;">
+                        <div class="status-badge status-enabled" style="font-size: 1.2rem; margin-bottom: 20px;">
+                            <i class="fas fa-check-circle"></i> 2FA đã được kích hoạt
+                        </div>
+                        <div style="background: #e8f5e8; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #28a745;">
+                            <p style="margin: 0; color: #155724;">
+                                <i class="fas fa-info-circle"></i> 
+                                <strong>2FA đang hoạt động</strong><br>
+                                Mỗi lần đăng nhập sẽ yêu cầu mã từ Google Authenticator
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                            <button onclick="showSecretKeyInfo()" class="btn btn-warning">
+                                <i class="fas fa-key"></i>
+                                Xem Secret Key
+                            </button>
+                            <button onclick="testGlobal2FA()" class="btn btn-info">
+                                <i class="fas fa-sync"></i>
+                                Test Global 2FA
+                            </button>
+                            <button onclick="resetGlobalAdmin()" class="btn btn-secondary">
+                                <i class="fas fa-refresh"></i>
+                                Reset Global Admin
+                            </button>
+                            <button onclick="manualSync()" class="btn btn-success">
+                                <i class="fas fa-sync-alt"></i>
+                                Manual Sync
+                            </button>
+                            <button onclick="export2FAData()" class="btn btn-warning">
+                                <i class="fas fa-download"></i>
+                                Export 2FA Data
+                            </button>
+                            <button onclick="import2FAData()" class="btn btn-info">
+                                <i class="fas fa-upload"></i>
+                                Import 2FA Data
+                            </button>
+                            <button onclick="terminateAllSessions()" class="btn btn-danger">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Kết thúc tất cả phiên
+                            </button>
+                            <button onclick="disable2FA()" class="btn btn-danger">
+                                <i class="fas fa-times"></i>
+                                Tắt 2FA
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (hasSecret) {
+                document.getElementById('2fa-status').innerHTML = `
+                    <div style="text-align: center;">
+                        <div class="status-badge status-disabled" style="font-size: 1.2rem; margin-bottom: 20px;">
+                            <i class="fas fa-pause-circle"></i> 2FA đã được thiết lập nhưng chưa kích hoạt
+                        </div>
+                        <div style="background: #fff3cd; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #ffc107;">
+                            <p style="margin: 0; color: #856404;">
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                <strong>Secret key đã được tạo</strong><br>
+                                Bạn có thể kích hoạt lại 2FA với cùng Google Authenticator
+                            </p>
+                        </div>
+                        <button onclick="setup2FA()" class="btn btn-primary">
+                            <i class="fas fa-mobile-alt"></i>
+                            Kích hoạt lại 2FA
+                        </button>
+                    </div>
+                `;
+            } else {
+                document.getElementById('2fa-status').innerHTML = `
+                    <div style="text-align: center;">
+                        <div class="status-badge status-disabled" style="font-size: 1.2rem; margin-bottom: 20px;">
+                            <i class="fas fa-times-circle"></i> 2FA chưa được thiết lập
+                        </div>
+                        <div style="background: #f8d7da; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #dc3545;">
+                            <p style="margin: 0; color: #721c24;">
+                                <i class="fas fa-shield-alt"></i> 
+                                <strong>Bảo mật chưa được kích hoạt</strong><br>
+                                Khuyến nghị kích hoạt 2FA để bảo vệ tài khoản
+                            </p>
+                        </div>
+                        <button onclick="setup2FA()" class="btn btn-primary">
+                            <i class="fas fa-mobile-alt"></i>
+                            Thiết lập 2FA
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Setup 2FA
+        function setup2FA() {
+            // Sử dụng secret key cố định (chỉ tạo 1 lần)
+            const secret = window.adminSecurity.getOrCreateSecretKey();
+            
+            const qrData = window.adminSecurity.generateQRCodeData(secret);
+            
+            document.getElementById('2fa-status').innerHTML = `
+                <div style="text-align: center;">
+                    <h4>Thiết lập 2FA với Secret Key</h4>
+                    <p style="margin: 20px 0; color: #666;">
+                        Sử dụng Google Authenticator, Authy hoặc ứng dụng tương tự
+                    </p>
+                    <div style="background: #e3f2fd; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #2196f3;">
+                        <strong><i class="fas fa-info-circle"></i> Hướng dẫn:</strong>
+                        <p style="margin: 15px 0; font-size: 0.9rem;">
+                            1. Mở Google Authenticator trên điện thoại<br>
+                            2. Nhấn "+" để thêm tài khoản<br>
+                            3. Chọn "Nhập khóa thiết lập"<br>
+                            4. Nhập Secret Key bên dưới và đặt tên "Warranty System"
+                        </p>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                            <p style="margin: 0 0 10px 0; font-weight: 600; color: #495057;">Secret Key:</p>
+                            <div style="
+                                background: #e9ecef; 
+                                padding: 12px; 
+                                border-radius: 5px; 
+                                font-family: monospace; 
+                                font-size: 1.1rem; 
+                                word-break: break-all; 
+                                margin: 10px 0;
+                                border: 2px solid #dee2e6;
+                            ">
+                                ${secret}
+                            </div>
+                            <button onclick="copySecretKey('${secret}')" class="btn btn-primary" style="margin-top: 10px;">
+                                <i class="fas fa-copy"></i> Copy Secret Key
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="verification-code">Nhập mã xác thực 6 số từ Google Authenticator</label>
+                        <input type="text" id="verification-code" maxlength="6" placeholder="123456" oninput="validateCodeInput(this)" style="
+                            width: 200px;
+                            padding: 12px;
+                            border: 2px solid #e9ecef;
+                            border-radius: 10px;
+                            font-size: 1.2rem;
+                            text-align: center;
+                            letter-spacing: 2px;
+                        ">
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                        <button onclick="verify2FASetup()" class="btn btn-success">
+                            <i class="fas fa-check"></i>
+                            Xác thực và kích hoạt
+                        </button>
+                        <button onclick="load2FAStatus()" class="btn btn-warning">
+                            <i class="fas fa-times"></i>
+                            Hủy
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Focus vào input để dễ nhập mã
+            setTimeout(() => {
+                document.getElementById('verification-code').focus();
+            }, 100);
+        }
+        
+        
+        
+        // Validate code input
+        function validateCodeInput(input) {
+            input.value = input.value.replace(/[^0-9]/g, '');
+            if (input.value.length === 6) {
+                input.style.borderColor = '#28a745';
+            } else {
+                input.style.borderColor = '#e1e5e9';
+            }
+        }
+        
+
+        // Verify 2FA setup
+        function verify2FASetup() {
+            const code = document.getElementById('verification-code').value;
+            
+            if (!code || code.length !== 6) {
+                showNotification('Vui lòng nhập mã 6 số!', 'error');
+                return;
+            }
+            
+            const secret = window.adminSecurity.securityData.twoFactorSecret;
+            const currentTime = Math.floor(Date.now() / 1000);
+            
+            console.log('=== 2FA Verification Debug ===');
+            console.log('Input code:', code);
+            console.log('Secret:', secret);
+            console.log('Current time:', new Date().toLocaleTimeString());
+            console.log('otplib available:', typeof otplib !== 'undefined');
+            
+            // Generate expected codes for different time windows
+            if (typeof TOTPAuth !== 'undefined') {
+                console.log('Using TOTPAuth for verification...');
+                
+                const totp = TOTPAuth.fromBase32(secret, {
+                    digits: 6,
+                    algorithm: 'SHA1',
+                    period: 30,
+                    window: 2
+                });
+                
+                // Show expected codes for different time windows
+                for (let offset = -60; offset <= 60; offset += 30) {
+                    const testTime = currentTime + offset;
+                    const expectedCode = totp.generate(testTime);
+                    const timeStr = new Date(testTime * 1000).toLocaleTimeString();
+                    console.log(`Time offset ${offset}s (${timeStr}): ${expectedCode}`);
+                }
+            } else if (typeof otplib !== 'undefined' && otplib.authenticator) {
+                console.log('Using otplib for verification...');
+                
+                // Configure otplib
+                otplib.authenticator.options = {
+                    window: 2,
+                    step: 30,
+                    algorithm: 'sha1',
+                    digits: 6
+                };
+                
+                // Show expected codes for different time windows
+                for (let offset = -60; offset <= 60; offset += 30) {
+                    const testTime = currentTime + offset;
+                    const expectedCode = otplib.authenticator.generate(secret, testTime);
+                    const timeStr = new Date(testTime * 1000).toLocaleTimeString();
+                    console.log(`Time offset ${offset}s (${timeStr}): ${expectedCode}`);
+                }
+            } else {
+                console.log('Neither TOTPAuth nor otplib available, using fallback method');
+                const currentTimeWindow = Math.floor(currentTime / 30);
+                const expectedCode = window.adminSecurity.generateTOTPCode(secret, currentTimeWindow);
+                console.log('Expected code (fallback):', expectedCode);
+            }
+            
+            const result = window.adminSecurity.enable2FA(code);
+            
+            if (result.success) {
+                showNotification(result.message, 'success');
+                load2FAStatus();
+            } else {
+                showNotification(`Mã không đúng! Vui lòng kiểm tra lại mã từ Google Authenticator.`, 'error');
+                console.log('Verification failed. Please check the console for debug info.');
+            }
+        }
+
+        // Disable 2FA
+        function disable2FA() {
+            // Tạo modal để nhập mã 2FA
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    padding: 30px;
+                    border-radius: 15px;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                    max-width: 400px;
+                    width: 90%;
+                    text-align: center;
+                ">
+                    <h3 style="margin-bottom: 20px; color: #e74c3c;">
+                        <i class="fas fa-shield-alt"></i> Tắt 2FA
+                    </h3>
+                    <p style="margin-bottom: 20px; color: #666;">
+                        Để tắt 2FA, vui lòng nhập mã 6 số từ Google Authenticator
+                    </p>
+                    <div style="margin-bottom: 20px;">
+                        <input type="text" id="disable-2fa-code" 
+                               placeholder="Nhập mã 6 số" 
+                               maxlength="6" 
+                               style="
+                                   width: 100%;
+                                   padding: 12px;
+                                   border: 2px solid #e9ecef;
+                                   border-radius: 10px;
+                                   font-size: 1.2rem;
+                                   text-align: center;
+                                   letter-spacing: 2px;
+                               "
+                               oninput="validateDisableCodeInput(this)">
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button onclick="confirmDisable2FA()" 
+                                style="
+                                    padding: 12px 24px;
+                                    background: #e74c3c;
+                                    color: white;
+                                    border: none;
+                                    border-radius: 10px;
+                                    cursor: pointer;
+                                    font-weight: 600;
+                                ">
+                            <i class="fas fa-times"></i> Tắt 2FA
+                        </button>
+                        <button onclick="closeDisableModal()" 
+                                style="
+                                    padding: 12px 24px;
+                                    background: #6c757d;
+                                    color: white;
+                                    border: none;
+                                    border-radius: 10px;
+                                    cursor: pointer;
+                                    font-weight: 600;
+                                ">
+                            <i class="fas fa-times"></i> Hủy
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Focus vào input
+            setTimeout(() => {
+                document.getElementById('disable-2fa-code').focus();
+            }, 100);
+        }
+        
+        // Validate disable code input
+        function validateDisableCodeInput(input) {
+            input.value = input.value.replace(/[^0-9]/g, '');
+            if (input.value.length === 6) {
+                input.style.borderColor = '#28a745';
+            } else {
+                input.style.borderColor = '#e1e5e9';
+            }
+        }
+        
+        // Confirm disable 2FA
+        function confirmDisable2FA() {
+            const code = document.getElementById('disable-2fa-code').value;
+            
+            if (!code || code.length !== 6) {
+                showNotification('Vui lòng nhập mã 6 số!', 'error');
+                return;
+            }
+            
+            const result = window.adminSecurity.disable2FA(code);
+            showNotification(result.message, result.success ? 'success' : 'error');
+            
+            if (result.success) {
+                closeDisableModal();
+                load2FAStatus();
+            }
+        }
+        
+        // Close disable modal
+        function closeDisableModal() {
+            const modal = document.querySelector('div[style*="position: fixed"]');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        // Show secret key info
+        function showSecretKeyInfo() {
+            const secret = window.adminSecurity.securityData.twoFactorSecret;
+            if (!secret) {
+                showNotification('Không tìm thấy Secret Key!', 'error');
+                return;
+            }
+            
+            const qrData = window.adminSecurity.generateQRCodeData(secret);
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    padding: 30px;
+                    border-radius: 15px;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                    max-width: 500px;
+                    width: 90%;
+                    text-align: center;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                ">
+                    <h3 style="margin-bottom: 20px; color: #667eea;">
+                        <i class="fas fa-key"></i> Thông tin Secret Key
+                    </h3>
+                    <p style="margin-bottom: 20px; color: #666;">
+                        Secret Key hiện tại của bạn (cố định cho tất cả trình duyệt)
+                    </p>
+                    
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #667eea;">
+                        <p style="margin: 0; font-weight: 600; color: #495057;">Secret Key:</p>
+                        <div style="
+                            background: #e9ecef; 
+                            padding: 10px; 
+                            border-radius: 5px; 
+                            font-family: monospace; 
+                            font-size: 1.1rem; 
+                            word-break: break-all; 
+                            margin: 10px 0;
+                        ">
+                            ${secret}
+                        </div>
+                        <button onclick="copySecretKey('${secret}')" class="btn btn-sm" style="margin-top: 10px;">
+                            <i class="fas fa-copy"></i> Copy Secret Key
+                        </button>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #28a745;">
+                        <p style="margin: 0; font-weight: 600; color: #495057;">QR Data:</p>
+                        <div style="
+                            background: #e9ecef; 
+                            padding: 10px; 
+                            border-radius: 5px; 
+                            font-family: monospace; 
+                            font-size: 0.9rem; 
+                            word-break: break-all; 
+                            margin: 10px 0;
+                        ">
+                            ${qrData}
+                        </div>
+                        <button onclick="copyQRData('${qrData}')" class="btn btn-sm" style="margin-top: 10px;">
+                            <i class="fas fa-copy"></i> Copy QR Data
+                        </button>
+                    </div>
+                    
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #ffc107;">
+                        <p style="margin: 0; color: #856404; font-size: 0.9rem;">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Lưu ý:</strong> Secret Key này sẽ được sử dụng cho tất cả trình duyệt. 
+                            Nếu bạn đã thêm vào Google Authenticator, không cần thêm lại.
+                        </p>
+                    </div>
+                    
+                    <button onclick="closeSecretKeyModal()" 
+                            style="
+                                padding: 12px 24px;
+                                background: #6c757d;
+                                color: white;
+                                border: none;
+                                border-radius: 10px;
+                                cursor: pointer;
+                                font-weight: 600;
+                            ">
+                        <i class="fas fa-times"></i> Đóng
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        // Copy secret key
+        function copySecretKey(secret) {
+            navigator.clipboard.writeText(secret).then(() => {
+                showNotification('Đã copy Secret Key!', 'success');
+            });
+        }
+        
+        // Copy QR data
+        function copyQRData(qrData) {
+            navigator.clipboard.writeText(qrData).then(() => {
+                showNotification('Đã copy QR Data!', 'success');
+            });
+        }
+        
+        // Close secret key modal
+        function closeSecretKeyModal() {
+            const modal = document.querySelector('div[style*="position: fixed"]');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        // Test global 2FA status
+        function testGlobal2FA() {
+            if (!window.adminSecurity) {
+                showNotification('adminSecurity not available!', 'error');
+                return;
+            }
+            
+            const global2FA = window.adminSecurity.getGlobal2FAStatus();
+            const local2FA = window.adminSecurity.securityData;
+            const globalAdmin = window.adminSecurity.getGlobalAdminInfo();
+            
+            let message = '=== Global 2FA Test ===\n';
+            message += `Local 2FA: ${local2FA.twoFactorEnabled ? 'ENABLED' : 'DISABLED'}\n`;
+            message += `Global 2FA: ${global2FA ? (global2FA.enabled ? 'ENABLED' : 'DISABLED') : 'NULL'}\n`;
+            message += `Global Admin: ${globalAdmin ? 'EXISTS' : 'NULL'}\n`;
+            
+            if (global2FA) {
+                message += `Global Secret: ${global2FA.secret ? global2FA.secret.substring(0, 8) + '...' : 'NULL'}\n`;
+                message += `Timestamp: ${new Date(global2FA.timestamp).toLocaleString()}\n`;
+            }
+            
+            if (globalAdmin) {
+                message += `Admin Created: ${new Date(globalAdmin.createdAt).toLocaleString()}\n`;
+                message += `Last Updated: ${globalAdmin.lastUpdated ? new Date(globalAdmin.lastUpdated).toLocaleString() : 'Never'}\n`;
+            }
+            
+            if (local2FA.twoFactorEnabled && local2FA.twoFactorSecret) {
+                if (!global2FA || !global2FA.enabled) {
+                    message += '\n⚠️ SYNC NEEDED: Force syncing...\n';
+                    window.adminSecurity.forceSyncGlobal2FA();
+                    message += '✅ Sync completed!';
+                } else {
+                    message += '\n✅ Global 2FA is synced correctly!';
+                }
+            }
+            
+            console.log(message);
+            showNotification('Check console for Global 2FA test results', 'info');
+        }
+        
+        // Reset global admin account
+        function resetGlobalAdmin() {
+            if (!window.adminSecurity) {
+                showNotification('adminSecurity not available!', 'error');
+                return;
+            }
+            
+            if (confirm('Bạn có chắc chắn muốn reset global admin account? Điều này sẽ xóa tất cả dữ liệu admin và 2FA!')) {
+                const success = window.adminSecurity.resetGlobalAdminAccount();
+                if (success) {
+                    showNotification('Global admin account đã được reset! Vui lòng refresh trang.', 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showNotification('Không thể reset global admin account!', 'error');
+                }
+            }
+        }
+        
+        // Manual sync function
+        function manualSync() {
+            if (!window.adminSecurity) {
+                showNotification('adminSecurity not available!', 'error');
+                return;
+            }
+            
+            try {
+                // Force sync with global 2FA
+                window.adminSecurity.syncWithGlobal2FA();
+                
+                // Force sync with global admin account
+                const globalAdmin = window.adminSecurity.getGlobalAdminInfo();
+                if (globalAdmin) {
+                    // Update local security data with global admin data
+                    if (globalAdmin.twoFactorEnabled !== undefined) {
+                        window.adminSecurity.securityData.twoFactorEnabled = globalAdmin.twoFactorEnabled;
+                    }
+                    if (globalAdmin.twoFactorSecret) {
+                        window.adminSecurity.securityData.twoFactorSecret = globalAdmin.twoFactorSecret;
+                    }
+                    
+                    // Save local data
+                    window.adminSecurity.saveSecurityData();
+                }
+                
+                // Broadcast changes to other tabs
+                window.adminSecurity.broadcastDataChange();
+                
+                // Reload 2FA status
+                load2FAStatus();
+                
+                showNotification('Manual sync completed!', 'success');
+            } catch (error) {
+                console.error('Manual sync error:', error);
+                showNotification('Manual sync failed: ' + error.message, 'error');
+            }
+        }
+        
+        // Export 2FA data for manual sync
+        function export2FAData() {
+            if (!window.adminSecurity) {
+                showNotification('adminSecurity not available!', 'error');
+                return;
+            }
+            
+            try {
+                const data = {
+                    twoFactorEnabled: window.adminSecurity.securityData.twoFactorEnabled,
+                    twoFactorSecret: window.adminSecurity.securityData.twoFactorSecret,
+                    timestamp: Date.now(),
+                    version: '1.0'
+                };
+                
+                const jsonString = JSON.stringify(data, null, 2);
+                
+                // Copy to clipboard
+                navigator.clipboard.writeText(jsonString).then(() => {
+                    showNotification('2FA data đã được copy vào clipboard!', 'success');
+                    
+                    // Show modal with data
+                    showExportModal(jsonString);
+                }).catch(() => {
+                    // Fallback: show modal with data
+                    showExportModal(jsonString);
+                });
+            } catch (error) {
+                console.error('Export error:', error);
+                showNotification('Export failed: ' + error.message, 'error');
+            }
+        }
+        
+        // Import 2FA data from clipboard
+        function import2FAData() {
+            if (!window.adminSecurity) {
+                showNotification('adminSecurity not available!', 'error');
+                return;
+            }
+            
+            // Show import modal
+            showImportModal();
+        }
+        
+        // Show export modal
+        function showExportModal(data) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    padding: 30px;
+                    border-radius: 15px;
+                    max-width: 600px;
+                    width: 90%;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                ">
+                    <h3 style="margin-top: 0; color: #333;">📤 Export 2FA Data</h3>
+                    <p style="color: #666;">Copy data này và paste vào trình duyệt khác:</p>
+                    <textarea readonly style="
+                        width: 100%;
+                        height: 200px;
+                        padding: 15px;
+                        border: 1px solid #ddd;
+                        border-radius: 8px;
+                        font-family: monospace;
+                        font-size: 12px;
+                        resize: vertical;
+                    ">${data}</textarea>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button onclick="copyExportData()" style="
+                            background: #007bff;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            margin-right: 10px;
+                        ">📋 Copy Data</button>
+                        <button onclick="closeExportModal()" style="
+                            background: #6c757d;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 5px;
+                            cursor: pointer;
+                        ">❌ Đóng</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Store data globally for copy function
+            window.exportData = data;
+        }
+        
+        // Show import modal
+        function showImportModal() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    padding: 30px;
+                    border-radius: 15px;
+                    max-width: 600px;
+                    width: 90%;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                ">
+                    <h3 style="margin-top: 0; color: #333;">📥 Import 2FA Data</h3>
+                    <p style="color: #666;">Paste data từ trình duyệt khác vào đây:</p>
+                    <textarea id="import-data" placeholder="Paste 2FA data here..." style="
+                        width: 100%;
+                        height: 200px;
+                        padding: 15px;
+                        border: 1px solid #ddd;
+                        border-radius: 8px;
+                        font-family: monospace;
+                        font-size: 12px;
+                        resize: vertical;
+                    "></textarea>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button onclick="processImportData()" style="
+                            background: #28a745;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            margin-right: 10px;
+                        ">✅ Import Data</button>
+                        <button onclick="closeImportModal()" style="
+                            background: #6c757d;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 5px;
+                            cursor: pointer;
+                        ">❌ Đóng</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        // Copy export data
+        function copyExportData() {
+            if (window.exportData) {
+                navigator.clipboard.writeText(window.exportData).then(() => {
+                    showNotification('Data đã được copy!', 'success');
+                });
+            }
+        }
+        
+        // Close export modal
+        function closeExportModal() {
+            const modal = document.querySelector('div[style*="position: fixed"]');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        // Close import modal
+        function closeImportModal() {
+            const modal = document.querySelector('div[style*="position: fixed"]');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        // Process import data
+        function processImportData() {
+            const importTextarea = document.getElementById('import-data');
+            const data = importTextarea.value.trim();
+            
+            if (!data) {
+                showNotification('Vui lòng paste data!', 'error');
+                return;
+            }
+            
+            try {
+                const parsedData = JSON.parse(data);
+                
+                if (!parsedData.twoFactorSecret) {
+                    showNotification('Data không hợp lệ!', 'error');
+                    return;
+                }
+                
+                // Update security data
+                window.adminSecurity.securityData.twoFactorEnabled = parsedData.twoFactorEnabled || false;
+                window.adminSecurity.securityData.twoFactorSecret = parsedData.twoFactorSecret;
+                
+                // Save data
+                window.adminSecurity.saveSecurityData();
+                window.adminSecurity.saveGlobal2FAStatus();
+                
+                // Close modal
+                closeImportModal();
+                
+                // Reload 2FA status
+                load2FAStatus();
+                
+                showNotification('2FA data đã được import thành công!', 'success');
+            } catch (error) {
+                console.error('Import error:', error);
+                showNotification('Import failed: ' + error.message, 'error');
+            }
+        }
+        
+        // Terminate all other sessions
+        function terminateAllSessions() {
+            if (!window.adminSecurity) {
+                showNotification('adminSecurity not available!', 'error');
+                return;
+            }
+            
+            if (confirm('Bạn có chắc chắn muốn kết thúc tất cả phiên đăng nhập khác? Điều này sẽ đăng xuất tất cả trình duyệt khác!')) {
+                const result = window.adminSecurity.terminateAllOtherSessions();
+                if (result.success) {
+                    showNotification(result.message, 'success');
+                    // Reload sessions
+                    loadSessions();
+                } else {
+                    showNotification(result.message, 'error');
+                }
+            }
+        }
+        
+        // Handle password change form submission
+        function handlePasswordChange(e) {
+            e.preventDefault();
+            
+            const oldPassword = document.getElementById('old-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+                showNotification('Mật khẩu mới và xác nhận không khớp!', 'error');
+                return;
+            }
+            
+            // Validate password length
+            if (newPassword.length < 6) {
+                showNotification('Mật khẩu mới phải có ít nhất 6 ký tự!', 'error');
+                return;
+            }
+            
+            // Change password
+            if (window.hiddenAuth) {
+                const result = window.hiddenAuth.changePassword(oldPassword, newPassword);
+                if (result.success) {
+                    showNotification(result.message, 'success');
+                    // Clear form
+                    document.getElementById('change-password-form').reset();
+                } else {
+                    showNotification(result.message, 'error');
+                }
+            } else {
+                // Try to initialize auth system
+                console.log('hiddenAuth not available, trying to initialize...');
+                try {
+                    // Wait a bit for scripts to load
+                    setTimeout(() => {
+                        if (window.hiddenAuth) {
+                            const result = window.hiddenAuth.changePassword(oldPassword, newPassword);
+                            if (result.success) {
+                                showNotification(result.message, 'success');
+                                document.getElementById('change-password-form').reset();
+                            } else {
+                                showNotification(result.message, 'error');
+                            }
+                        } else {
+                            showNotification('Authentication system failed to load. Please refresh the page.', 'error');
+                        }
+                    }, 1000);
+                } catch (error) {
+                    console.error('Auth initialization error:', error);
+                    showNotification('Authentication system error: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // Load sessions
+        function loadSessions() {
+            const sessions = window.adminSecurity.getActiveSessions();
+            
+            if (sessions.length === 0) {
+                document.getElementById('sessions-list').innerHTML = '<p>Không có phiên đăng nhập nào.</p>';
+                return;
+            }
+            
+            let sessionsHTML = '';
+            sessions.forEach(session => {
+                sessionsHTML += `
+                    <div class="session-item">
+                        <div class="session-info">
+                            <h4>Phiên ${session.id.substring(0, 10)}...</h4>
+                            <p><strong>IP:</strong> ${session.ip}</p>
+                            <p><strong>Đăng nhập:</strong> ${window.adminSecurity.formatTime(session.loginTime)}</p>
+                            <p><strong>Hoạt động cuối:</strong> ${window.adminSecurity.formatDuration(session.lastActivity)}</p>
+                        </div>
+                        <div class="session-actions">
+                            <button onclick="killSession('${session.id}')" class="btn btn-danger">
+                                <i class="fas fa-times"></i>
+                                Kết thúc
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            sessionsHTML += `
+                <div style="margin-top: 20px; text-align: center;">
+                    <button onclick="killAllOtherSessions()" class="btn btn-warning">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Kết thúc tất cả phiên khác
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('sessions-list').innerHTML = sessionsHTML;
+        }
+
+        // Kill session
+        function killSession(sessionId) {
+            if (confirm('Bạn có chắc chắn muốn kết thúc phiên này?')) {
+                const result = window.adminSecurity.killSession(sessionId);
+                showNotification(result.message, result.success ? 'success' : 'error');
+                loadSessions();
+            }
+        }
+
+        // Kill all other sessions
+        function killAllOtherSessions() {
+            if (confirm('Bạn có chắc chắn muốn kết thúc tất cả phiên đăng nhập khác?')) {
+                const currentSessionId = Object.keys(window.adminSecurity.getSessions()).pop();
+                const result = window.adminSecurity.killAllOtherSessions(currentSessionId);
+                showNotification(result.message, result.success ? 'success' : 'error');
+                loadSessions();
+            }
+        }
+
+        // Load devices
+        function loadDevices() {
+            const devices = window.adminSecurity.getTrustedDevices();
+            const deviceList = Object.values(devices);
+            
+            if (deviceList.length === 0) {
+                document.getElementById('devices-list').innerHTML = '<p>Chưa có thiết bị tin cậy nào.</p>';
+                return;
+            }
+            
+            let devicesHTML = '';
+            deviceList.forEach(device => {
+                devicesHTML += `
+                    <div class="device-item">
+                        <div class="device-info">
+                            <h4>${device.name}</h4>
+                            <p><strong>IP:</strong> ${device.ip}</p>
+                            <p><strong>Thêm vào:</strong> ${window.adminSecurity.formatTime(device.addedAt)}</p>
+                        </div>
+                        <div class="device-actions">
+                            <button onclick="removeTrustedDevice('${device.id}')" class="btn btn-danger">
+                                <i class="fas fa-trash"></i>
+                                Xóa
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('devices-list').innerHTML = devicesHTML;
+        }
+
+        // Add trusted device
+        function addTrustedDevice() {
+            const deviceName = document.getElementById('device-name').value;
+            if (!deviceName) {
+                showNotification('Vui lòng nhập tên thiết bị!', 'error');
+                return;
+            }
+            
+            const result = window.adminSecurity.addTrustedDevice(deviceName);
+            showNotification(result.message, result.success ? 'success' : 'error');
+            
+            if (result.success) {
+                document.getElementById('device-name').value = '';
+                loadDevices();
+            }
+        }
+
+        // Remove trusted device
+        function removeTrustedDevice(deviceId) {
+            if (confirm('Bạn có chắc chắn muốn xóa thiết bị này khỏi danh sách tin cậy?')) {
+                const result = window.adminSecurity.removeTrustedDevice(deviceId);
+                showNotification(result.message, result.success ? 'success' : 'error');
+                loadDevices();
+            }
+        }
+
+        // Change password form
+        document.getElementById('change-password-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const oldPassword = document.getElementById('old-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            const result = window.adminSecurity.changePassword(oldPassword, newPassword, confirmPassword);
+            showNotification(result.message, result.success ? 'success' : 'error');
+            
+            if (result.success) {
+                document.getElementById('change-password-form').reset();
+            }
+        });
+
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+
+        // Go back
+        function goBack() {
+            window.history.back();
+        }
+
+        // Check admin access
+        function checkAdminAccess() {
+            const isLoggedIn = localStorage.getItem('admin_logged_in') === 'true';
+            const loginTime = localStorage.getItem('admin_login_time');
+            
+            if (!isLoggedIn || !loginTime) {
+                return false;
+            }
+            
+            // Check if session is still valid (24 hours)
+            const sessionAge = Date.now() - parseInt(loginTime);
+            if (sessionAge > 24 * 60 * 60 * 1000) {
+                localStorage.removeItem('admin_logged_in');
+                localStorage.removeItem('admin_login_time');
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Check TOTPAuth library availability
+        function checkTOTPAuthLibrary() {
+            console.log('=== Checking TOTPAuth Library ===');
+            console.log('TOTPAuth available:', typeof TOTPAuth !== 'undefined');
+            console.log('otplib available:', typeof otplib !== 'undefined');
+            
+            if (typeof TOTPAuth !== 'undefined') {
+                console.log('TOTPAuth library loaded successfully');
+                console.log('TOTPAuth methods available:', {
+                    fromBase32: typeof TOTPAuth.fromBase32 !== 'undefined',
+                    constructor: typeof TOTPAuth === 'function'
+                });
+                return true;
+            } else {
+                console.warn('TOTPAuth library not loaded');
+                return false;
+            }
+        }
+
+        // Initialize auth system
+        function initializeAuthSystem() {
+            if (!window.hiddenAuth) {
+                console.log('Initializing auth system...');
+                try {
+                    // Try to create auth instance
+                    window.hiddenAuth = new HiddenAuth();
+                    console.log('Auth system initialized successfully');
+                    return true;
+                } catch (error) {
+                    console.error('Failed to initialize auth system:', error);
+                    return false;
+                }
+            }
+            return true;
+        }
+        
+        // Manual remote sync via proxy
+        async function manualRemoteSync() {
+            try {
+                const before = window.hiddenAuth?.getGlobalAdminData?.();
+                await window.hiddenAuth?.refreshFromRemote?.();
+                const after = window.hiddenAuth?.getGlobalAdminData?.();
+                if (after) {
+                    // Sync 2FA locally
+                    if (window.adminSecurity) {
+                        if (after.twoFactorSecret) window.adminSecurity.securityData.twoFactorSecret = after.twoFactorSecret;
+                        if (typeof after.twoFactorEnabled === 'boolean') window.adminSecurity.securityData.twoFactorEnabled = after.twoFactorEnabled;
+                        window.adminSecurity.saveSecurityData();
+                    }
+                    showNotification('Đã đồng bộ dữ liệu từ server', 'success');
+                } else {
+                    showNotification('Không nhận được dữ liệu từ server', 'warning');
+                }
+            } catch (e) {
+                showNotification('Lỗi đồng bộ: ' + e.message, 'error');
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is authenticated
+            if (!checkAdminAccess()) {
+                alert('Bạn cần đăng nhập để truy cập trang bảo mật!');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Initialize auth system
+            if (!initializeAuthSystem()) {
+                console.warn('Auth system not available, some features may not work');
+            }
+            
+            // Check TOTPAuth library
+            checkTOTPAuthLibrary();
+            
+            // Force sync global 2FA status if needed
+            if (window.adminSecurity) {
+                window.adminSecurity.forceSyncGlobal2FA();
+            }
+            
+            // Load security overview
+            loadSecurityOverview();
+            
+            // Track current session
+            if (window.adminSecurity) {
+                window.adminSecurity.trackCurrentSession();
+            }
+            
+            // Add password change form handler
+            const passwordForm = document.getElementById('change-password-form');
+            if (passwordForm) {
+                passwordForm.addEventListener('submit', handlePasswordChange);
+            }
+            
+            // Listen for session termination
+            window.addEventListener('sessionsTerminated', function() {
+                if (window.adminSecurity && window.adminSecurity.isSessionTerminated()) {
+                    alert('Phiên đăng nhập của bạn đã bị kết thúc bởi admin khác!');
+                    window.location.href = 'login.html';
+                }
+            });
+            
+            // Listen for password changes
+            window.addEventListener('adminPasswordChanged', function() {
+                showNotification('Mật khẩu admin đã được thay đổi! Vui lòng đăng nhập lại.', 'info');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 3000);
+            });
+        });
+    </script>
+</body>
+</html>

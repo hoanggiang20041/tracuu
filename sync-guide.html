@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hướng dẫn Sync 2FA giữa các trình duyệt</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .step {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        .code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border-left-color: #ffc107;
+            border: 1px solid #ffc107;
+        }
+        .success {
+            background: rgba(40, 167, 69, 0.2);
+            border-left-color: #28a745;
+            border: 1px solid #28a745;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #000;
+        }
+        .btn-info {
+            background: #17a2b8;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .highlight {
+            background: rgba(255, 255, 0, 0.2);
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Hướng dẫn Sync 2FA giữa các trình duyệt</h1>
+        <p>Giải pháp để đồng bộ 2FA giữa Chrome, Firefox, Edge, Safari...</p>
+        
+        <div class="step">
+            <h3>🎯 Vấn đề hiện tại</h3>
+            <p>Mỗi trình duyệt có localStorage riêng biệt trên localhost, nên không thể sync tự động. Cần sync thủ công.</p>
+        </div>
+        
+        <div class="step success">
+            <h3>✅ Giải pháp: Export/Import 2FA Data</h3>
+            <p>Đã thêm 2 button mới trong trang security:</p>
+            <div class="button-group">
+                <button class="btn-warning">📤 Export 2FA Data</button>
+                <button class="btn-info">📥 Import 2FA Data</button>
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>📋 Cách thực hiện</h3>
+            
+            <h4>Bước 1: Export từ trình duyệt đã bật 2FA</h4>
+            <ol>
+                <li>Mở trình duyệt đã bật 2FA (Chrome)</li>
+                <li>Vào <span class="highlight">security.html</span></li>
+                <li>Tab "2FA" → Nhấn <span class="highlight">"Export 2FA Data"</span></li>
+                <li>Copy data trong modal</li>
+            </ol>
+            
+            <h4>Bước 2: Import vào trình duyệt khác</h4>
+            <ol>
+                <li>Mở trình duyệt khác (Firefox)</li>
+                <li>Vào <span class="highlight">security.html</span></li>
+                <li>Tab "2FA" → Nhấn <span class="highlight">"Import 2FA Data"</span></li>
+                <li>Paste data đã copy</li>
+                <li>Nhấn <span class="highlight">"Import Data"</span></li>
+            </ol>
+            
+            <h4>Bước 3: Test đăng nhập</h4>
+            <ol>
+                <li>Mở <span class="highlight">login.html</span></li>
+                <li>Đăng nhập với <span class="highlight">admin123</span></li>
+                <li>Kiểm tra có yêu cầu 2FA không</li>
+            </ol>
+        </div>
+        
+        <div class="step warning">
+            <h3>⚠️ Lưu ý quan trọng</h3>
+            <ul>
+                <li><strong>Chỉ sync 1 lần:</strong> Sau khi import, 2FA sẽ hoạt động bình thường</li>
+                <li><strong>Secret key cố định:</strong> Cùng 1 secret key cho tất cả trình duyệt</li>
+                <li><strong>Google Authenticator:</strong> Sử dụng cùng 1 app cho tất cả trình duyệt</li>
+                <li><strong>Bảo mật:</strong> Data export chứa secret key, cần bảo mật</li>
+            </ul>
+        </div>
+        
+        <div class="step">
+            <h3>🔧 Các button trong Security Page</h3>
+            <div class="button-group">
+                <button>🔑 Xem Secret Key</button>
+                <button>🔄 Test Global 2FA</button>
+                <button>🔄 Reset Global Admin</button>
+                <button>🔄 Manual Sync</button>
+                <button class="btn-warning">📤 Export 2FA Data</button>
+                <button class="btn-info">📥 Import 2FA Data</button>
+                <button class="btn-danger">❌ Tắt 2FA</button>
+            </div>
+        </div>
+        
+        <div class="step success">
+            <h3>🚀 Khi deploy lên web thật</h3>
+            <p>Khi deploy lên server thật, localStorage sẽ sync tự động giữa các trình duyệt vì:</p>
+            <ul>
+                <li>Cùng domain</li>
+                <li>Cùng storage scope</li>
+                <li>Auto sync sẽ hoạt động</li>
+            </ul>
+        </div>
+        
+        <div class="step">
+            <h3>🧪 Test ngay bây giờ</h3>
+            <div class="button-group">
+                <button onclick="window.open('security.html', '_blank')">Mở Security Page</button>
+                <button onclick="window.open('login.html', '_blank')">Mở Login Page</button>
+                <button onclick="window.open('test-global-admin.html', '_blank')">Test Global Admin</button>
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>📱 Cách thêm vào Google Authenticator</h3>
+            <ol>
+                <li>Mở Google Authenticator app</li>
+                <li>Nhấn "+" để thêm account</li>
+                <li>Chọn "Enter a setup key"</li>
+                <li>Nhập secret key từ "Xem Secret Key"</li>
+                <li>Nhập tên: "Admin 2FA"</li>
+                <li>Nhấn "Add"</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>
