@@ -1,220 +1,228 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Tra cứu phiếu bảo hành</title>
-	<link rel="stylesheet" href="assets/style.css" />
-	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-	
-	<!-- Production Guard - Chống debug và ẩn thông tin nhạy cảm -->
-	<script>
-		(function() {
-			'use strict';
-			
-			// Disable console logs
-			if (typeof console !== 'undefined') {
-				console.log = console.warn = console.error = console.info = console.debug = function() {};
-			}
-			
-			// Disable right-click context menu
-			document.addEventListener('contextmenu', function(e) {
-				e.preventDefault();
-				return false;
-			});
-			
-			// Disable F12, Ctrl+Shift+I, Ctrl+U, Ctrl+S, Ctrl+P
-			document.addEventListener('keydown', function(e) {
-				// F12
-				if (e.keyCode === 123) {
-					e.preventDefault();
-					return false;
-				}
-				// Ctrl+Shift+I (DevTools)
-				if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
-					e.preventDefault();
-					return false;
-				}
-				// Ctrl+U (View Source)
-				if (e.ctrlKey && e.keyCode === 85) {
-					e.preventDefault();
-					return false;
-				}
-				// Ctrl+S (Save)
-				if (e.ctrlKey && e.keyCode === 83) {
-					e.preventDefault();
-					return false;
-				}
-				// Ctrl+P (Print)
-				if (e.ctrlKey && e.keyCode === 80) {
-					e.preventDefault();
-					return false;
-				}
-			});
-			
-			// Disable text selection
-			document.addEventListener('selectstart', function(e) {
-				e.preventDefault();
-				return false;
-			});
-			
-			// Disable drag and drop
-			document.addEventListener('dragstart', function(e) {
-				e.preventDefault();
-				return false;
-			});
-			
-			// Disable copy/paste
-			document.addEventListener('copy', function(e) {
-				e.preventDefault();
-				return false;
-			});
-			
-			document.addEventListener('paste', function(e) {
-				e.preventDefault();
-				return false;
-			});
-			
-			// Disable cut
-			document.addEventListener('cut', function(e) {
-				e.preventDefault();
-				return false;
-			});
-			
-			// Disable print screen
-			document.addEventListener('keyup', function(e) {
-				if (e.keyCode === 44) { // Print Screen
-					e.preventDefault();
-					return false;
-				}
-			});
-			
-			// Disable common debug shortcuts
-			document.addEventListener('keydown', function(e) {
-				// Alt+Tab, Alt+F4
-				if (e.altKey && (e.keyCode === 9 || e.keyCode === 115)) {
-					e.preventDefault();
-					return false;
-				}
-			});
-			
-			// Clear console periodically
-			setInterval(function() {
-				if (typeof console !== 'undefined' && console.clear) {
-					console.clear();
-				}
-			}, 1000);
-			
-			// Disable developer tools detection
-			let devtools = {open: false, orientation: null};
-			const threshold = 160;
-			
-			setInterval(function() {
-				if (window.outerHeight - window.innerHeight > threshold || 
-					window.outerWidth - window.innerWidth > threshold) {
-					if (!devtools.open) {
-						devtools.open = true;
-						// Redirect or show warning
-						document.body.innerHTML = '<div style="text-align:center;padding:50px;font-family:Arial;"><h1>Access Denied</h1><p>Developer tools detected. Please close and refresh the page.</p></div>';
-					}
-				}
-			}, 500);
-			
-		})();
-	</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a">
+  <title>Tra cứu phiếu bảo hành</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Production Guard - Chống debug và ẩn thông tin nhạy cảm (đã tối ưu cho mobile) -->
+  <script>
+    (function () {
+      'use strict';
+
+      // Chỉ áp dụng một số chặn cơ bản, bỏ các chặn dễ gây lỗi trên mobile
+      // Disable console logs (nhẹ)
+      if (typeof console !== 'undefined') {
+        console.log = console.warn = console.error = console.info = console.debug = function () {};
+      }
+
+      // Disable right-click (desktop)
+      document.addEventListener('contextmenu', function (e) {
+        // Cho phép trên mobile để tránh gây khó chịu
+        if (!/Mobi|Android/i.test(navigator.userAgent)) {
+          e.preventDefault();
+          return false;
+        }
+      });
+
+      // Giới hạn các phím tắt nguy hiểm trên desktop, KHÔNG áp dụng mobile
+      document.addEventListener('keydown', function (e) {
+        if (/Mobi|Android/i.test(navigator.userAgent)) return;
+
+        // F12
+        if (e.keyCode === 123) { e.preventDefault(); return false; }
+        // Ctrl+Shift+I (DevTools)
+        if (e.ctrlKey && e.shiftKey && e.keyCode === 73) { e.preventDefault(); return false; }
+        // Ctrl+U (View Source)
+        if (e.ctrlKey && e.keyCode === 85) { e.preventDefault(); return false; }
+        // Ctrl+S (Save)
+        if (e.ctrlKey && e.keyCode === 83) { e.preventDefault(); return false; }
+        // Ctrl+P (Print)
+        if (e.ctrlKey && e.keyCode === 80) { e.preventDefault(); return false; }
+      });
+
+      // KHÔNG chặn select/copy/paste/drag trên mobile để người dùng nhập liệu mượt
+      // -> nếu muốn chặn copy, chỉ chặn trên desktop:
+      const desktopOnly = (fn) => (/Mobi|Android/i.test(navigator.userAgent) ? null : fn);
+
+      desktopOnly(document.addEventListener('selectstart', function (e) {
+        e.preventDefault(); return false;
+      }));
+      desktopOnly(document.addEventListener('dragstart', function (e) {
+        e.preventDefault(); return false;
+      }));
+      desktopOnly(document.addEventListener('copy', function (e) {
+        e.preventDefault(); return false;
+      }));
+      desktopOnly(document.addEventListener('paste', function (e) {
+        e.preventDefault(); return false;
+      }));
+      desktopOnly(document.addEventListener('cut', function (e) {
+        e.preventDefault(); return false;
+      }));
+
+      // BỎ cơ chế phát hiện DevTools bằng inner/outer size (gây false positive trên mobile)
+      // Nếu cần, chỉ dùng trên desktop và nương tay:
+      if (!/Mobi|Android/i.test(navigator.userAgent)) {
+        let devtools = { open: false };
+        const threshold = 200;
+        setInterval(function () {
+          if (window.outerWidth && window.outerHeight) {
+            if ((window.outerHeight - window.innerHeight > threshold) ||
+                (window.outerWidth - window.innerWidth > threshold)) {
+              // Chỉ cảnh báo nhẹ, KHÔNG replace toàn bộ body để không phá UI
+              if (!devtools.open) {
+                devtools.open = true;
+                console.log('DevTools suspected.');
+              }
+            }
+          }
+        }, 1200);
+      }
+
+      // Dừng việc clear console liên tục (làm chậm)
+      // setInterval(function(){ if(console.clear) console.clear(); }, 1000);
+    })();
+  </script>
 </head>
 <body>
-	<!-- Loading Overlay -->
-	<div id="loading-overlay" class="loading-overlay hidden">
-		<div class="loading-spinner">
-			<div class="spinner"></div>
-			<p>Đang tìm kiếm...</p>
-		</div>
-	</div>
+  <!-- Site Header -->
+  <header class="site-header">
+    <div class="site-header__inner container">
+      <a href="#" class="brand">
+        <i class="fas fa-shield-alt"></i>
+        <span>Tra cứu bảo hành</span>
+      </a>
 
-	<!-- Image Modal -->
-	<div id="image-modal" class="image-modal hidden">
-		<div class="modal-content">
-			<span class="close-modal">&times;</span>
-			<img id="modal-image" src="" alt="Phiếu bảo hành">
-			<div class="modal-actions">
-				<button id="download-btn" class="download-btn">
-					<i class="fas fa-download"></i> Tải ảnh
-				</button>
-			</div>
-		</div>
-	</div>
+      <nav class="nav">
+        <a href="#" class="nav__link is-active"><i class="fa-solid fa-magnifying-glass"></i> Tra cứu</a>
+        <a href="#" class="nav__link"><i class="fa-solid fa-circle-info"></i> Hướng dẫn</a>
+        <a href="#" class="nav__link"><i class="fa-solid fa-headset"></i> Hỗ trợ</a>
+      </nav>
+    </div>
+  </header>
 
-	<div class="container">
-		<!-- Header với animation -->
-		<header class="header">
-			<div class="logo">
-				<i class="fas fa-shield-alt"></i>
-				<h1 class="title">Tra cứu phiếu bảo hành</h1>
-			</div>
-		</header>
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <p>Đang tìm kiếm...</p>
+    </div>
+  </div>
 
-		<!-- Form tìm kiếm nâng cao -->
-		<form id="lookup-form" class="search-form">
-			<div class="search-container">
-				<div class="search-field">
-					<label for="customerName">
-						<i class="fas fa-user"></i> Họ và tên <span style="color: #e74c3c;">*</span>
-					</label>
-					<input 
-						id="customerName" 
-						name="customerName" 
-						type="text" 
-						placeholder="Nhập họ và tên khách hàng..." 
-						autocomplete="off" 
-						required
-					/>
-				</div>
-				
-				<div class="search-field">
-					<label for="customerId">
-						<i class="fas fa-id-card"></i> ID khách hàng <span style="color: #e74c3c;">*</span>
-					</label>
-					<input 
-						id="customerId" 
-						name="customerId" 
-						type="text" 
-						placeholder="Nhập ID khách hàng..." 
-						autocomplete="off" 
-						required
-					/>
-				</div>
-				
-				<button type="submit" class="search-btn">
-					<i class="fas fa-search"></i>
-					<span>Tra cứu</span>
-				</button>
-			</div>
-		</form>
+  <!-- Image Modal -->
+  <div id="image-modal" class="image-modal hidden">
+    <div class="modal-content">
+      <span class="close-modal" aria-label="Đóng">&times;</span>
+      <img id="modal-image" src="" alt="Phiếu bảo hành">
+      <div class="modal-actions">
+        <button id="download-btn" class="download-btn">
+          <i class="fas fa-download"></i> Tải ảnh
+        </button>
+      </div>
+    </div>
+  </div>
 
-		<!-- Kết quả tìm kiếm -->
-		<div id="result" class="result hidden">
-			<div class="customer-info">
-				<div class="customer-avatar">
-					<i class="fas fa-user-circle"></i>
-				</div>
-				<div class="customer-details">
-					<h2 id="customerName" class="customer-name"></h2>
-					<p class="customer-id">
-						<i class="fas fa-id-badge"></i>
-						<span id="customerIdText"></span>
-					</p>
-				</div>
-			</div>
-			
-			<div id="warrantyList" class="warranty-grid"></div>
-		</div>
+  <main class="container page">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero__content">
+        <h1 class="title">Tra cứu phiếu bảo hành</h1>
+        <p class="subtitle">Nhập thông tin khách hàng để xem nhanh trạng thái bảo hành.</p>
+      </div>
+    </section>
 
-		<!-- Thông báo -->
-		<div id="message" class="message"></div>
-	</div>
+    <!-- Form tìm kiếm -->
+    <form id="lookup-form" class="search-form card">
+      <div class="search-container">
+        <div class="search-field">
+          <label for="customerName">
+            <i class="fas fa-user"></i> Họ và tên <span style="color:#e74c3c">*</span>
+          </label>
+          <input
+            id="customerName"
+            name="customerName"
+            type="text"
+            placeholder="Nhập họ và tên khách hàng..."
+            autocomplete="off"
+            required
+            inputmode="text"
+          />
+        </div>
 
-	<script src="assets/app.js"></script>
+        <div class="search-field">
+          <label for="customerId">
+            <i class="fas fa-id-card"></i> ID khách hàng <span style="color:#e74c3c">*</span>
+          </label>
+          <input
+            id="customerId"
+            name="customerId"
+            type="text"
+            placeholder="Nhập ID khách hàng..."
+            autocomplete="off"
+            required
+            inputmode="text"
+          />
+        </div>
+
+        <button type="submit" class="search-btn">
+          <i class="fas fa-search"></i>
+          <span>Tra cứu</span>
+        </button>
+      </div>
+    </form>
+
+    <!-- Kết quả -->
+    <section id="result" class="result hidden card">
+      <div class="customer-info">
+        <div class="customer-avatar">
+          <i class="fas fa-user-circle"></i>
+        </div>
+        <div class="customer-details">
+          <!-- Lưu ý: có trùng id với input#customerName trong file gốc.
+               Nếu app.js đang querySelector('#customerName') để gán tên hiển thị
+               sẽ đụng trùng. Khuyến nghị đổi id thẻ H2 thành customerNameDisplay
+               và cập nhật app.js tương ứng. Ở đây giữ nguyên theo yêu cầu. -->
+          <h2 id="customerName" class="customer-name"></h2>
+          <p class="customer-id">
+            <i class="fas fa-id-badge"></i>
+            <span id="customerIdText"></span>
+          </p>
+        </div>
+      </div>
+
+      <div id="warrantyList" class="warranty-grid"></div>
+    </section>
+
+    <!-- Thông báo -->
+    <div id="message" class="message"></div>
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <div class="footer__brand">
+        <i class="fas fa-shield-alt"></i>
+        <strong>Tra cứu bảo hành</strong>
+      </div>
+      <div class="footer__links">
+        <a href="#">Điều khoản</a>
+        <a href="#">Chính sách bảo mật</a>
+        <a href="#">Liên hệ</a>
+      </div>
+      <div class="footer__copy">
+        © <span id="y"></span> Your Company. All rights reserved.
+      </div>
+    </div>
+    <script>
+      document.getElementById('y').textContent = new Date().getFullYear();
+    </script>
+  </footer>
+
+  <script src="assets/app.js"></script>
 </body>
 </html>
