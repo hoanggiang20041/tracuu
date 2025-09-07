@@ -820,3 +820,13 @@ img{max-width:100%; display:block}
   .search-form{ padding:12px; }
   .result{ padding:12px; }
 }
+/* Fix label contrast */
+.search-field label {
+  color: #ffffff !important;   /* trắng rõ */
+  font-weight: 700 !important; /* đậm */
+}
+
+.search-field label i {
+  color: #60a5fa !important;   /* xanh sáng hơn */
+}
+
