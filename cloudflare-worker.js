@@ -104,18 +104,36 @@ export default {
           const data = await response.json();
           return new Response(JSON.stringify(data), { 
             status: 200, 
-            headers: { 
-              ...cors, 
-              'Content-Type': 'application/json' 
-            } 
+            headers: { ...cors, 'Content-Type': 'application/json' }
           });
         } catch (error) {
           return new Response(JSON.stringify({ error: 'Failed to fetch warranty data' }), { 
             status: 500, 
+            headers: { ...cors, 'Content-Type': 'application/json' }
+          });
+        }
+      }
+      if (req.method === 'PUT') {
+        try {
+          const body = await req.text();
+          const response = await fetch(`https://api.jsonbin.io/v3/b/${env.JSONBIN_ID}`, {
+            method: 'PUT',
             headers: { 
-              ...cors, 
+              'X-Master-Key': env.JSONBIN_KEY, 
               'Content-Type': 'application/json' 
-            } 
+            },
+            body
+          });
+          if (!response.ok) throw new Error(`JSONBin error: ${response.status}`);
+          const data = await response.json();
+          return new Response(JSON.stringify(data), { 
+            status: 200, 
+            headers: { ...cors, 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          return new Response(JSON.stringify({ error: 'Failed to update warranty data' }), { 
+            status: 500, 
+            headers: { ...cors, 'Content-Type': 'application/json' }
           });
         }
       }
