@@ -5,87 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f172a">
   <title>Tra cứu phiếu bảo hành</title>
+
   <link rel="stylesheet" href="assets/style.css" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Production Guard - Chống debug và ẩn thông tin nhạy cảm (đã tối ưu cho mobile) -->
+  <!-- Production Guard - nhẹ nhàng & không chặn mobile -->
   <script>
     (function () {
       'use strict';
+      const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-      // Chỉ áp dụng một số chặn cơ bản, bỏ các chặn dễ gây lỗi trên mobile
-      // Disable console logs (nhẹ)
+      // Nhẹ: tắt console log (không phá chức năng)
       if (typeof console !== 'undefined') {
         console.log = console.warn = console.error = console.info = console.debug = function () {};
       }
 
-      // Disable right-click (desktop)
-      document.addEventListener('contextmenu', function (e) {
-        // Cho phép trên mobile để tránh gây khó chịu
-        if (!/Mobi|Android/i.test(navigator.userAgent)) {
-          e.preventDefault();
-          return false;
-        }
-      });
+      if (isMobile) {
+        // TUYỆT ĐỐI không chặn gì trên mobile để tránh false-positive
+        return;
+      }
 
-      // Giới hạn các phím tắt nguy hiểm trên desktop, KHÔNG áp dụng mobile
+      // Desktop: chặn một vài phím tắt hay bật devtools
       document.addEventListener('keydown', function (e) {
-        if (/Mobi|Android/i.test(navigator.userAgent)) return;
-
         // F12
         if (e.keyCode === 123) { e.preventDefault(); return false; }
         // Ctrl+Shift+I (DevTools)
         if (e.ctrlKey && e.shiftKey && e.keyCode === 73) { e.preventDefault(); return false; }
         // Ctrl+U (View Source)
         if (e.ctrlKey && e.keyCode === 85) { e.preventDefault(); return false; }
-        // Ctrl+S (Save)
-        if (e.ctrlKey && e.keyCode === 83) { e.preventDefault(); return false; }
-        // Ctrl+P (Print)
-        if (e.ctrlKey && e.keyCode === 80) { e.preventDefault(); return false; }
       });
 
-      // KHÔNG chặn select/copy/paste/drag trên mobile để người dùng nhập liệu mượt
-      // -> nếu muốn chặn copy, chỉ chặn trên desktop:
-      const desktopOnly = (fn) => (/Mobi|Android/i.test(navigator.userAgent) ? null : fn);
-
-      desktopOnly(document.addEventListener('selectstart', function (e) {
-        e.preventDefault(); return false;
-      }));
-      desktopOnly(document.addEventListener('dragstart', function (e) {
-        e.preventDefault(); return false;
-      }));
-      desktopOnly(document.addEventListener('copy', function (e) {
-        e.preventDefault(); return false;
-      }));
-      desktopOnly(document.addEventListener('paste', function (e) {
-        e.preventDefault(); return false;
-      }));
-      desktopOnly(document.addEventListener('cut', function (e) {
-        e.preventDefault(); return false;
-      }));
-
-      // BỎ cơ chế phát hiện DevTools bằng inner/outer size (gây false positive trên mobile)
-      // Nếu cần, chỉ dùng trên desktop và nương tay:
-      if (!/Mobi|Android/i.test(navigator.userAgent)) {
-        let devtools = { open: false };
-        const threshold = 200;
-        setInterval(function () {
-          if (window.outerWidth && window.outerHeight) {
-            if ((window.outerHeight - window.innerHeight > threshold) ||
-                (window.outerWidth - window.innerWidth > threshold)) {
-              // Chỉ cảnh báo nhẹ, KHÔNG replace toàn bộ body để không phá UI
-              if (!devtools.open) {
-                devtools.open = true;
-                console.log('DevTools suspected.');
-              }
-            }
-          }
-        }, 1200);
-      }
-
-      // Dừng việc clear console liên tục (làm chậm)
-      // setInterval(function(){ if(console.clear) console.clear(); }, 1000);
+      // Không dùng detector dựa vào inner/outer size (hay gây nhầm)
+      // Không chặn copy/paste/select để người dùng thao tác mượt mà
     })();
   </script>
 </head>
@@ -115,9 +67,9 @@
   </div>
 
   <!-- Image Modal -->
-  <div id="image-modal" class="image-modal hidden">
-    <div class="modal-content">
-      <span class="close-modal" aria-label="Đóng">&times;</span>
+  <div id="image-modal" class="image-modal hidden" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Xem ảnh phiếu bảo hành">
+      <button class="close-modal" aria-label="Đóng">&times;</button>
       <img id="modal-image" src="" alt="Phiếu bảo hành">
       <div class="modal-actions">
         <button id="download-btn" class="download-btn">
@@ -137,18 +89,17 @@
     </section>
 
     <!-- Form tìm kiếm -->
-    <form id="lookup-form" class="search-form card">
+    <form id="lookup-form" class="search-form card" autocomplete="off" novalidate>
       <div class="search-container">
         <div class="search-field">
           <label for="customerName">
-            <i class="fas fa-user"></i> Họ và tên <span style="color:#e74c3c">*</span>
+            <i class="fas fa-user"></i> Họ và tên <span class="req">*</span>
           </label>
           <input
             id="customerName"
             name="customerName"
             type="text"
             placeholder="Nhập họ và tên khách hàng..."
-            autocomplete="off"
             required
             inputmode="text"
           />
@@ -156,14 +107,13 @@
 
         <div class="search-field">
           <label for="customerId">
-            <i class="fas fa-id-card"></i> ID khách hàng <span style="color:#e74c3c">*</span>
+            <i class="fas fa-id-card"></i> ID khách hàng <span class="req">*</span>
           </label>
           <input
             id="customerId"
             name="customerId"
             type="text"
             placeholder="Nhập ID khách hàng..."
-            autocomplete="off"
             required
             inputmode="text"
           />
@@ -179,14 +129,11 @@
     <!-- Kết quả -->
     <section id="result" class="result hidden card">
       <div class="customer-info">
-        <div class="customer-avatar">
+        <div class="customer-avatar" aria-hidden="true">
           <i class="fas fa-user-circle"></i>
         </div>
         <div class="customer-details">
-          <!-- Lưu ý: có trùng id với input#customerName trong file gốc.
-               Nếu app.js đang querySelector('#customerName') để gán tên hiển thị
-               sẽ đụng trùng. Khuyến nghị đổi id thẻ H2 thành customerNameDisplay
-               và cập nhật app.js tương ứng. Ở đây giữ nguyên theo yêu cầu. -->
+          <!-- Giữ nguyên id để không phá app.js hiện có -->
           <h2 id="customerName" class="customer-name"></h2>
           <p class="customer-id">
             <i class="fas fa-id-badge"></i>
@@ -195,11 +142,11 @@
         </div>
       </div>
 
-      <div id="warrantyList" class="warranty-grid"></div>
+      <div id="warrantyList" class="warranty-grid"><!-- cards được app.js render vào đây --></div>
     </section>
 
     <!-- Thông báo -->
-    <div id="message" class="message"></div>
+    <div id="message" class="message" role="status" aria-live="polite"></div>
   </main>
 
   <!-- Site Footer -->
@@ -218,10 +165,79 @@
         © <span id="y"></span> Your Company. All rights reserved.
       </div>
     </div>
-    <script>
-      document.getElementById('y').textContent = new Date().getFullYear();
-    </script>
+    <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
   </footer>
+
+  <!-- Fallback ảnh xem trước + empty state -->
+  <script>
+    // Placeholder SVG (data URI) khi ảnh lỗi/thiếu
+    const PLACEHOLDER =
+      'data:image/svg+xml;utf8,' +
+      encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675">
+          <defs>
+            <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="#0b1220"/>
+              <stop offset="100%" stop-color="#111827"/>
+            </linearGradient>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#g)"/>
+          <g fill="#93c5fd" opacity="0.25" transform="translate(600,337)">
+            <circle r="180"/>
+            <circle r="260" opacity="0.2"/>
+            <circle r="340" opacity="0.15"/>
+          </g>
+          <g fill="#e5e7eb" font-family="Inter, Arial" text-anchor="middle">
+            <text x="600" y="350" font-size="42" font-weight="700">Không có ảnh xem trước</text>
+            <text x="600" y="410" font-size="22" opacity="0.75">Ảnh sẽ hiển thị khi có đường dẫn hợp lệ</text>
+          </g>
+        </svg>
+      `);
+
+    document.addEventListener('DOMContentLoaded', function(){
+      const list = document.getElementById('warrantyList');
+      const msg  = document.getElementById('message');
+
+      const applyImgFallback = () => {
+        const imgs = list.querySelectorAll('img');
+        imgs.forEach(img => {
+          if (img.__hasFallback) return;
+          img.__hasFallback = true;
+          if (!img.getAttribute('src') || img.getAttribute('src') === '#') {
+            img.setAttribute('src', PLACEHOLDER);
+          }
+          img.addEventListener('error', () => { img.src = PLACEHOLDER; }, { once: true });
+          if (!img.classList.contains('thumb')) img.classList.add('thumb');
+        });
+      };
+
+      const updateEmptyState = () => {
+        const hasItem = Array.from(list.children).some(n => !n.classList?.contains('warranty-empty'));
+        const old = list.querySelector('.warranty-empty');
+        if (!hasItem) {
+          if (!old) {
+            const div = document.createElement('div');
+            div.className = 'warranty-empty';
+            div.textContent = 'Chưa có phiếu bảo hành nào được tìm thấy – thử lại với thông tin khác.';
+            list.appendChild(div);
+          }
+        } else if (old) {
+          old.remove();
+        }
+      };
+
+      const obs = new MutationObserver(() => {
+        applyImgFallback();
+        updateEmptyState();
+      });
+      obs.observe(list, { childList: true, subtree: true });
+
+      applyImgFallback();
+      updateEmptyState();
+
+      if (msg) msg.style.color = '#e5e7eb';
+    });
+  </script>
 
   <script src="assets/app.js"></script>
 </body>
