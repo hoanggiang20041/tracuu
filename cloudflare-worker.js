@@ -1,13 +1,15 @@
-// Cloudflare Worker cho bảo mật dữ liệu
-// Deploy lên Cloudflare Workers với 2 biến môi trường:
-// - JSONBIN_ID: 68b9c242ae596e708fe27f7b
-// - JSONBIN_KEY: (master key của bạn)
-
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
-    const origin = req.headers.get('Origin') || '*';
-    
+
+    // CORS whitelist
+    const allowedOrigins = [
+      "https://tracuu-5j4.pages.dev",
+      // thêm domain khác nếu cần
+    ];
+    const reqOrigin = req.headers.get('Origin');
+    const origin = allowedOrigins.includes(reqOrigin) ? reqOrigin : '';
+
     // CORS headers
     const cors = {
       'Access-Control-Allow-Origin': origin,
@@ -37,11 +39,7 @@ export default {
               'X-Bin-Meta': 'false'
             }
           });
-          
-          if (!response.ok) {
-            throw new Error(`JSONBin error: ${response.status}`);
-          }
-          
+          if (!response.ok) throw new Error(`JSONBin error: ${response.status}`);
           const data = await response.json();
           return new Response(JSON.stringify(data), { 
             status: 200, 
@@ -60,7 +58,6 @@ export default {
           });
         }
       }
-      
       if (req.method === 'PUT') {
         try {
           const body = await req.text();
@@ -72,11 +69,7 @@ export default {
             },
             body
           });
-          
-          if (!response.ok) {
-            throw new Error(`JSONBin error: ${response.status}`);
-          }
-          
+          if (!response.ok) throw new Error(`JSONBin error: ${response.status}`);
           const data = await response.json();
           return new Response(JSON.stringify(data), { 
             status: 200, 
@@ -107,11 +100,7 @@ export default {
               'X-Bin-Meta': 'false'
             }
           });
-          
-          if (!response.ok) {
-            throw new Error(`JSONBin error: ${response.status}`);
-          }
-          
+          if (!response.ok) throw new Error(`JSONBin error: ${response.status}`);
           const data = await response.json();
           return new Response(JSON.stringify(data), { 
             status: 200, 
