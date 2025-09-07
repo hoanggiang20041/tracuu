@@ -1,7 +1,7 @@
 // Cấu hình JSONBin.io
 // Switch to server proxy to avoid exposing keys
-const JSONBIN_GET_URL = `/api/admin-state`;
-const JSONBIN_PUT_URL = `/api/admin-state`;
+const JSONBIN_GET_URL = 'https://tracuu-5j4.pages.dev/api/warranty-data';
+const JSONBIN_PUT_URL = 'https://tracuu-5j4.pages.dev/api/warranty-data';
 
 // Global variables
 let allWarranties = [];
