@@ -30,6 +30,11 @@ class RemoteStore {
     }
 
     isConfigured() {
+        // If using server-side proxy (relative /api endpoint), consider configured
+        if (typeof this.baseUrl === 'string' && this.baseUrl.indexOf('/api/') === 0) {
+            return true;
+        }
+        // Fallback to legacy client-side config
         return !!(this.config && this.config.masterKey && this.config.binId);
     }
 

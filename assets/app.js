@@ -27,6 +27,7 @@ const imageModal = document.getElementById("image-modal");
 const modalImage = document.getElementById("modal-image");
 const downloadBtn = document.getElementById("download-btn");
 const closeModal = document.querySelector(".close-modal");
+const renewModal = document.getElementById('renew-modal');
 
 // Hiển thị loading
 function showLoading() {
@@ -50,6 +51,88 @@ function showImageModal(imageSrc, customerName, customerId, endDate) {
 function hideImageModal() {
 	imageModal.classList.remove("show");
 	setTimeout(() => imageModal.classList.add("hidden"), 300);
+}
+
+// Gia hạn modal
+function showRenewModal(customer){
+	const el = document.getElementById('renew-customer');
+	if (el) el.textContent = `${customer.name} (${customer.id})`;
+	document.getElementById('renew-days').value = 30;
+	document.getElementById('renew-discount').value = '';
+	window.__currentRenewCustomer = customer;
+	updateRenewAmount();
+	if (renewModal){
+		renewModal.classList.remove('hidden');
+		setTimeout(()=>renewModal.classList.add('show'), 10);
+	}
+}
+function hideRenewModal(){ if (!renewModal) return; renewModal.classList.remove('show'); setTimeout(()=>renewModal.classList.add('hidden'), 300); }
+
+function getAdminExtrasSync(){
+	try {
+		const cached = localStorage.getItem('admin_extras');
+		return cached ? JSON.parse(cached) : { pricing:{pricePerWeek:200000, pricePerDay:Math.round(200000/7)}, discounts:[] };
+	} catch(_) { return { pricing:{pricePerWeek:200000, pricePerDay:Math.round(200000/7)}, discounts:[] }; }
+}
+
+function updateRenewAmount(){
+	const extras = getAdminExtrasSync();
+	const days = Math.max(1, parseInt(document.getElementById('renew-days').value||'30',10));
+	const unit = extras.pricing?.pricePerDay || Math.round((extras.pricing?.pricePerWeek||200000)/7);
+	let amount = days * unit;
+	const code = (document.getElementById('renew-discount').value||'').trim().toUpperCase();
+	let applied = '';
+	if (code && days>= 31){
+		const found = (extras.discounts||[]).find(d=>d.code===code && (!d.expire || new Date(d.expire)>=new Date()));
+		if (found && days >= (found.minDays||31)){
+			amount = Math.round(amount * (100 - found.percent)/100);
+			applied = `Đã áp dụng mã ${found.code} (-${found.percent}%)`;
+		}
+	}
+	document.getElementById('renew-amount').textContent = amount.toLocaleString('vi-VN') + ' đ';
+	const c = window.__currentRenewCustomer || { id:'', name:'' };
+	const content = `${c.id}_${(c.name||'').toUpperCase().replace(/\s+/g,' ') }_${days}`;
+	document.getElementById('renew-content').textContent = 'Nội dung chuyển khoản: ' + content;
+	document.getElementById('discount-note').textContent = applied;
+	// VietQR image
+	const bank = 'MB';
+	const acct = '68610042009';
+	const name = 'NGUYEN HOANG GIANG';
+	const qr = `https://img.vietqr.io/image/${bank}-${acct}-compact.png?amount=${amount}&addInfo=${encodeURIComponent(content)}&accountName=${encodeURIComponent(name)}`;
+	document.getElementById('renew-qr').src = qr;
+}
+
+function applyRenewDiscount(){ updateRenewAmount(); }
+function copyRenewContent(){
+	const txt = document.getElementById('renew-content').textContent.replace('Nội dung chuyển khoản: ','');
+	navigator.clipboard.writeText(txt).then(()=>{ alert('Đã sao chép nội dung!'); });
+}
+
+async function submitRenewRequest(){
+	try {
+		const c = window.__currentRenewCustomer; if (!c) return;
+		const days = Math.max(1, parseInt(document.getElementById('renew-days').value||'30',10));
+		const amountText = document.getElementById('renew-amount').textContent||'0';
+		const amount = parseInt(amountText.replace(/\D/g,''),10)||0;
+		const content = document.getElementById('renew-content').textContent.replace('Nội dung chuyển khoản: ','');
+		const file = document.getElementById('renew-bill').files[0];
+		let billUrl = '';
+		if (file) {
+			billUrl = await (async ()=>{
+				const form = new FormData(); form.append('image', file);
+				const r = await fetch('https://api.imgbb.com/1/upload?key=d46a4b1117287a127e5ae5e55e193046',{method:'POST', body:form});
+				const j = await r.json(); if (j.success) return j.data.url; return '';
+			})();
+		}
+		// push to admin-state
+		const state = await (window.remoteStore && window.remoteStore.getAdminState ? window.remoteStore.getAdminState() : Promise.resolve({})) || {};
+		const renewals = Array.isArray(state.renewals)? state.renewals : [];
+		renewals.push({ id:c.id, name:c.name, days, amount, content, billUrl, status:'pending', createdAt:Date.now() });
+		state.renewals = renewals;
+		await window.remoteStore.setAdminState(state);
+		alert('Đã gửi yêu cầu gia hạn. Vui lòng chờ admin duyệt.');
+		hideRenewModal();
+	} catch(e){ alert('Lỗi gửi yêu cầu: '+e.message); }
 }
 
 // Tải ảnh về
@@ -338,6 +421,7 @@ function createWarrantyCard(warranty, customer, index) {
 				<button class="download-btn" onclick="downloadImage('${warranty.image || 'https://via.placeholder.com/400x200?text=No+Image'}', '${customer.name}', '${customer.id}', '${warranty.end}')">
 					<i class="fas fa-download"></i> Tải ảnh
 				</button>
+				${!isActive ? `<button class="download-btn" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);" onclick="showRenewModal({id: '${customer.id}', name: '${customer.name}'})"><i class=\"fas fa-sync\"></i> Gia hạn</button>` : ''}
 			</div>
 		</div>
 	`;

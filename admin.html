@@ -350,6 +350,14 @@
 		.table-content {
 			overflow-x: auto;
 		}
+
+		/* Force readable row text color */
+		.data-table, .data-table th, .data-table td {
+			color: #1f2937;
+		}
+		.table-header, .table-header * {
+			color: #ffffff;
+		}
 		
 		table {
 			width: 100%;
@@ -649,6 +657,18 @@
 				<i class="fas fa-plus-circle"></i>
 				Thêm mới
 			</button>
+			<button class="tab-btn" onclick="showTab('pricing', this)">
+				<i class="fas fa-money-bill-wave"></i>
+				Giá gia hạn
+			</button>
+			<button class="tab-btn" onclick="showTab('discounts', this)">
+				<i class="fas fa-tags"></i>
+				Mã giảm giá
+			</button>
+			<button class="tab-btn" onclick="showTab('renewals', this)">
+				<i class="fas fa-receipt"></i>
+				Yêu cầu gia hạn
+			</button>
 		</div>
 
 		<!-- Tab Content: Phiếu bảo hành -->
@@ -840,6 +860,76 @@
 						</button>
 					</div>
 				</form>
+			</div>
+		</div>
+
+		<!-- Tab Content: Giá gia hạn -->
+		<div id="pricing-tab" class="tab-content">
+			<div class="admin-form">
+				<h3 class="form-title"><i class="fas fa-money-bill-wave"></i> Cấu hình giá gia hạn</h3>
+				<div class="form-grid">
+					<div class="form-field">
+						<label><i class="fas fa-calendar-week"></i> Giá 1 tuần (VND)</label>
+						<input id="price-per-week" type="number" min="0" step="1000" placeholder="200000" />
+					</div>
+					<div class="form-field">
+						<label><i class="fas fa-calculator"></i> Giá 1 ngày (auto = tuần/7)</label>
+						<input id="price-per-day" type="number" min="0" step="1000" placeholder="~28500" />
+					</div>
+				</div>
+				<div class="form-actions">
+					<button class="btn btn-primary" onclick="savePricing()"><i class="fas fa-save"></i> Lưu giá</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Tab Content: Mã giảm giá -->
+		<div id="discounts-tab" class="tab-content">
+			<div class="admin-form">
+				<h3 class="form-title"><i class="fas fa-tags"></i> Mã giảm giá</h3>
+				<div class="form-grid">
+					<div class="form-field">
+						<label><i class="fas fa-barcode"></i> Mã</label>
+						<input id="dc-code" type="text" placeholder="GIAM10" />
+					</div>
+					<div class="form-field">
+						<label><i class="fas fa-percent"></i> % giảm</label>
+						<input id="dc-percent" type="number" min="1" max="100" placeholder="10" />
+					</div>
+					<div class="form-field">
+						<label><i class="fas fa-calendar-day"></i> Tối thiểu ngày (>=31)</label>
+						<input id="dc-min-days" type="number" min="0" placeholder="31" />
+					</div>
+					<div class="form-field">
+						<label><i class="fas fa-hourglass-end"></i> Hạn dùng (yyyy-mm-dd)</label>
+						<input id="dc-expire" type="date" />
+					</div>
+				</div>
+				<div class="form-actions">
+					<button class="btn btn-primary" onclick="addDiscountCode()"><i class="fas fa-plus"></i> Thêm mã</button>
+				</div>
+			</div>
+			<div class="data-table" style="margin-top: 15px;">
+				<div class="table-header"><h2 class="table-title">Danh sách mã</h2></div>
+				<div class="table-content">
+					<table><thead><tr><th>Mã</th><th>%</th><th>Min ngày</th><th>Hết hạn</th><th>Thao tác</th></tr></thead>
+					<tbody id="discounts-tbody"></tbody></table>
+				</div>
+			</div>
+		</div>
+
+		<!-- Tab Content: Yêu cầu gia hạn -->
+		<div id="renewals-tab" class="tab-content">
+			<div class="data-table">
+				<div class="table-header"><h2 class="table-title">Yêu cầu gia hạn</h2></div>
+				<div class="table-content">
+					<table>
+						<thead>
+							<tr><th>ID</th><th>Tên</th><th>Số ngày</th><th>Số tiền</th><th>Nội dung</th><th>Bill</th><th>Trạng thái</th><th>Thao tác</th></tr>
+						</thead>
+						<tbody id="renewals-tbody"></tbody>
+					</table>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -1047,6 +1137,7 @@
 			}
 			
 			console.log("Admin page initialized - waiting for admin.js to load...");
+			try { window.hiddenAuth && window.hiddenAuth.refreshFromRemote(); } catch(_) {}
 			
 			// Test tools menu and admin functions after a short delay
 			setTimeout(() => {

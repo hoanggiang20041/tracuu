@@ -250,8 +250,8 @@ body {
 
 .modal-content {
 	position: relative;
-	max-width: 95%;
-	max-height: 95%;
+	max-width: min(1200px, 90vw);
+	max-height: 90vh;
 	background: #fff;
 	border-radius: 20px;
 	overflow: hidden;
@@ -290,6 +290,7 @@ body {
 #modal-image {
 	width: 100%;
 	height: auto;
+	max-height: calc(90vh - 120px);
 	display: block;
 	object-fit: contain;
 }

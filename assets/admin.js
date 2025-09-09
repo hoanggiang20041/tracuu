@@ -7,6 +7,12 @@ const JSONBIN_PUT_URL = 'https://tracuu-5j4.pages.dev/api/warranty-data';
 let allWarranties = [];
 let allCustomers = [];
 let currentEditId = null;
+// Admin extras persisted via remote admin-state
+let adminExtras = {
+    pricing: { pricePerWeek: 200000, pricePerDay: Math.round(200000/7) },
+    discounts: [], // {code, percent, minDays, expire}
+    renewals: []   // {id, name, days, amount, content, billUrl, status}
+};
 
 // DOM Elements
 const warrantyTbody = document.getElementById('warranty-tbody');
@@ -41,6 +47,7 @@ async function initializeAdmin() {
     try {
         console.log('Initializing admin...');
         await loadAllData();
+        await loadAdminExtras();
         setupEventListeners();
         
         // Đảm bảo tab warranty được hiển thị đầu tiên
@@ -54,10 +61,51 @@ async function initializeAdmin() {
             console.warn('Duplicate IDs found on initialization:', duplicates);
         }
         
+        // Populate pricing inputs and tables
+        try {
+            const week = document.getElementById('price-per-week');
+            const day = document.getElementById('price-per-day');
+            if (week) week.value = adminExtras.pricing?.pricePerWeek ?? 200000;
+            if (day) day.value = adminExtras.pricing?.pricePerDay ?? Math.round((adminExtras.pricing?.pricePerWeek||200000)/7);
+            renderDiscounts();
+            renderRenewals();
+        } catch(_) {}
         showNotification('Hệ thống admin đã sẵn sàng!', 'success');
     } catch (error) {
         console.error('Admin initialization error:', error);
         showNotification('Lỗi khởi tạo: ' + error.message, 'error');
+    }
+}
+
+// Load/Save admin extras to remote admin-state
+async function loadAdminExtras(){
+    try {
+        if (window.remoteStore && window.remoteStore.isConfigured()) {
+            const state = await window.remoteStore.getAdminState();
+            if (state && typeof state === 'object') {
+                adminExtras.pricing = state.pricing || adminExtras.pricing;
+                adminExtras.discounts = Array.isArray(state.discounts) ? state.discounts : adminExtras.discounts;
+                adminExtras.renewals = Array.isArray(state.renewals) ? state.renewals : adminExtras.renewals;
+            }
+        } else {
+            const cached = localStorage.getItem('admin_extras');
+            if (cached) adminExtras = { ...adminExtras, ...JSON.parse(cached) };
+        }
+    } catch (e){ console.warn('loadAdminExtras failed', e); }
+}
+
+async function saveAdminExtras(){
+    try {
+        const state = await (window.remoteStore && window.remoteStore.getAdminState ? window.remoteStore.getAdminState() : Promise.resolve({})) || {};
+        const merged = { ...state, pricing: adminExtras.pricing, discounts: adminExtras.discounts, renewals: adminExtras.renewals };
+        if (window.remoteStore && window.remoteStore.isConfigured()) {
+            await window.remoteStore.setAdminState(merged);
+        }
+        localStorage.setItem('admin_extras', JSON.stringify(adminExtras));
+        showNotification('Đã lưu cấu hình gia hạn', 'success');
+    } catch (e){
+        console.error('saveAdminExtras error', e);
+        showNotification('Lỗi lưu cấu hình: ' + e.message, 'error');
     }
 }
 
@@ -155,6 +203,99 @@ async function loadAllData() {
         console.error('Load data error:', error);
         showNotification('Lỗi tải dữ liệu: ' + error.message, 'error');
     }
+}
+
+// ===== Pricing =====
+async function savePricing(){
+    const weekEl = document.getElementById('price-per-week');
+    const dayEl = document.getElementById('price-per-day');
+    if (!weekEl || !dayEl) return;
+    const pricePerWeek = Math.max(0, parseInt(weekEl.value || '200000', 10));
+    const pricePerDay = Math.max(0, parseInt(dayEl.value || String(Math.round(pricePerWeek/7)), 10));
+    adminExtras.pricing = { pricePerWeek, pricePerDay };
+    await saveAdminExtras();
+}
+
+// ===== Discounts =====
+function renderDiscounts(){
+    const tbody = document.getElementById('discounts-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    (adminExtras.discounts||[]).forEach((d, idx)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td><code>${d.code}</code></td><td>${d.percent}%</td><td>${d.minDays||0}</td><td>${d.expire||'-'}</td><td><button class="btn btn-danger btn-sm" onclick="deleteDiscount(${idx})"><i class='fas fa-trash'></i></button></td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+async function addDiscountCode(){
+    const code = (document.getElementById('dc-code')?.value||'').trim().toUpperCase();
+    const percent = parseInt(document.getElementById('dc-percent')?.value||'0',10);
+    const minDays = parseInt(document.getElementById('dc-min-days')?.value||'31',10);
+    const expire = document.getElementById('dc-expire')?.value||'';
+    if (!code || percent<=0 || percent>100){
+        showNotification('Vui lòng nhập mã và % giảm hợp lệ', 'error');
+        return;
+    }
+    if (adminExtras.discounts.find(d=>d.code===code)){
+        showNotification('Mã đã tồn tại', 'error');
+        return;
+    }
+    adminExtras.discounts.push({ code, percent, minDays: isNaN(minDays)?31:minDays, expire });
+    await saveAdminExtras();
+    renderDiscounts();
+    showNotification('Đã thêm mã giảm giá', 'success');
+}
+
+async function deleteDiscount(index){
+    adminExtras.discounts.splice(index,1);
+    await saveAdminExtras();
+    renderDiscounts();
+}
+
+// ===== Renewals (admin view) =====
+function renderRenewals(){
+    const tbody = document.getElementById('renewals-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    (adminExtras.renewals||[]).forEach((r, idx)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><code>${r.id}</code></td>
+            <td>${r.name}</td>
+            <td>${r.days}</td>
+            <td>${(r.amount||0).toLocaleString('vi-VN')} đ</td>
+            <td><small>${r.content||''}</small></td>
+            <td>${r.billUrl?`<a href="${r.billUrl}" target="_blank">Xem</a>`:'-'}</td>
+            <td>${r.status||'pending'}</td>
+            <td>
+                ${r.status==='pending'?`<button class="btn btn-success btn-sm" onclick="approveRenewal(${idx})"><i class='fas fa-check'></i></button>`:''}
+            </td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+async function approveRenewal(index){
+    const r = adminExtras.renewals[index];
+    if (!r) return;
+    // Extend warranty end date for customer id
+    const w = allWarranties.find(x => (x.id||x.customerId) === r.id);
+    if (w){
+        const base = w.end ? new Date(w.end) : new Date();
+        base.setDate(base.getDate() + (parseInt(r.days,10)||0));
+        const yyyy = base.getFullYear();
+        const mm = String(base.getMonth()+1).padStart(2,'0');
+        const dd = String(base.getDate()).padStart(2,'0');
+        w.end = `${yyyy}-${mm}-${dd}`;
+        await saveToJSONBin();
+        processDataForDisplay();
+        renderWarranties();
+        renderCustomers();
+    }
+    adminExtras.renewals[index].status = 'approved';
+    await saveAdminExtras();
+    renderRenewals();
+    showNotification('Đã duyệt gia hạn và cộng ngày cho khách', 'success');
 }
 
 // Process raw data for display

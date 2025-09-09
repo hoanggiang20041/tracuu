@@ -46,6 +46,57 @@
 		</div>
 	</div>
 
+	<!-- Renew Modal -->
+	<div id="renew-modal" class="image-modal hidden">
+		<div class="modal-content" style="max-width: 720px;">
+			<span class="close-modal" onclick="hideRenewModal()">&times;</span>
+			<div style="padding: 22px 22px 8px;">
+				<h3 style="margin-bottom: 10px; color:#111827">Gia hạn bảo hành</h3>
+				<div id="renew-customer" style="font-size: 0.95rem; color:#6b7280; margin-bottom: 12px;"></div>
+				<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+					<div>
+						<label style="font-weight:600; font-size:0.9rem; color:#374151">Số ngày gia hạn</label>
+						<input id="renew-days" type="number" min="1" value="30" style="width:100%; padding:12px; border:1px solid #e5e7eb; border-radius:10px;" oninput="updateRenewAmount()" />
+					</div>
+					<div>
+						<label style="font-weight:600; font-size:0.9rem; color:#374151">Mã giảm giá (nếu có)</label>
+						<div style="display:flex; gap:8px;">
+							<input id="renew-discount" type="text" placeholder="GIAM10" style="flex:1; padding:12px; border:1px solid #e5e7eb; border-radius:10px; text-transform:uppercase;" />
+							<button class="download-btn" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)" onclick="applyRenewDiscount()"><i class="fas fa-check"></i> Áp dụng</button>
+						</div>
+						<div id="discount-note" style="font-size:0.85rem; color:#6b7280; margin-top:6px;"></div>
+					</div>
+				</div>
+
+				<hr style="margin:14px 0; border:none; border-top:1px solid #e5e7eb;" />
+
+				<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items:center;">
+					<div>
+						<div style="font-weight:600; color:#374151; margin-bottom:6px;">Số tiền cần chuyển</div>
+						<div id="renew-amount" style="font-size:1.3rem; font-weight:700; color:#111827">0 đ</div>
+						<div style="font-size:0.9rem; color:#6b7280" id="renew-content"></div>
+						<div style="display:flex; gap:8px; margin-top:8px;">
+							<button class="download-btn" onclick="copyRenewContent()"><i class="fas fa-copy"></i> Sao chép nội dung</button>
+						</div>
+						<div style="font-size:0.85rem; color:#6b7280; margin-top:6px;">Vui lòng sao chép đúng nội dung và chụp màn hình đã thanh toán.</div>
+					</div>
+					<div style="text-align:center;">
+						<div style="font-weight:600; color:#374151; margin-bottom:6px;">QR chuyển khoản MB (68610042009 - NGUYỄN HOÀNG GIANG)</div>
+						<img id="renew-qr" src="" alt="QR chuyển khoản" style="width:240px; height:240px; background:#fff; border-radius:12px; padding:8px;" />
+					</div>
+				</div>
+
+				<div style="margin-top:12px;">
+					<label style="font-weight:600; font-size:0.9rem; color:#374151;">Tải ảnh hóa đơn/bill thanh toán</label>
+					<input id="renew-bill" type="file" accept="image/*" style="display:block; margin-top:6px;" />
+				</div>
+
+				<div class="modal-actions">
+					<button class="download-btn" onclick="submitRenewRequest()"><i class="fas fa-paper-plane"></i> Gửi yêu cầu</button>
+				</div>
+			</div>
+		</div>
+
 	<div class="container">
 		<!-- Header chuyên nghiệp -->
 		<header class="header">
@@ -154,5 +205,10 @@
 	</footer>
 
 	<script src="assets/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function(){
+            try { window.hiddenAuth && window.hiddenAuth.refreshFromRemote(); } catch(_) {}
+        });
+    </script>
 </body>
 </html>
