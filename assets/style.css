@@ -196,7 +196,7 @@ body {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	z-index: 1000;
+	z-index: 2147483648;
 	backdrop-filter: blur(5px);
 }
 
@@ -235,7 +235,7 @@ body {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	z-index: 1001;
+	z-index: 2147483649; /* Above container overlay */
 	opacity: 0;
 	visibility: hidden;
 	transition: all 0.3s ease;

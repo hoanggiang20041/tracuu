@@ -21,11 +21,11 @@
         <div class="renew-grid">
             <div class="renew-field">
                 <label>Số ngày gia hạn</label>
-                <input id="renew-days" type="number" min="1" value="30" />
+                <input id="renew-days" type="number" min="1" value="30" oninput="updateRenewAmount()" />
             </div>
             <div class="renew-field">
                 <label>Mã giảm giá (nếu có)</label>
-                <input id="renew-discount" type="text" placeholder="GIAM10" style="text-transform:uppercase" />
+                <input id="renew-discount" type="text" placeholder="GIAM10" style="text-transform:uppercase" oninput="updateRenewAmount()" />
             </div>
         </div>
         <div style="margin-top:12px">
@@ -33,7 +33,6 @@
             <div id="renew-content" style="color:#9ca3af"></div>
             <div class="renew-actions">
                 <button class="download-btn" onclick="copyRenewContent()"><i class="fas fa-copy"></i> Sao chép nội dung</button>
-                <button class="download-btn" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)" onclick="updateRenewAmount()"><i class="fas fa-rotate"></i> Tính lại</button>
             </div>
         </div>
         <div style="text-align:center;margin-top:12px">
@@ -50,12 +49,13 @@
         </div>
     </div>
 
+    <script src="assets/remote-store.js"></script>
     <script>
         function getQuery(){ const p=new URLSearchParams(location.search); return { id:p.get('id')||'', name:decodeURIComponent(p.get('name')||'') }; }
         function getAdminExtrasSync(){ try{const c=localStorage.getItem('admin_extras');return c?JSON.parse(c):{pricing:{tiers:[{label:'1 tuần',days:7,price:200000}]},discounts:[]};}catch(_){return {pricing:{tiers:[{label:'1 tuần',days:7,price:200000}]},discounts:[]};}}
         function updateRenewAmount(){ const extras=getAdminExtrasSync(); const q=getQuery(); document.getElementById('renew-info').textContent=`Khách hàng: ${q.name} (${q.id})`; const days=Math.max(1,parseInt(document.getElementById('renew-days').value||'30',10)); const tiers=(extras.pricing&&extras.pricing.tiers)?extras.pricing.tiers:[{label:'1 tuần',days:7,price:200000}]; const perDay=Math.round((tiers[0].price)/(tiers[0].days)); let amount=days*perDay; for(const t of tiers){ const packs=Math.floor(days/t.days); const rem=days%t.days; const cost=packs*t.price+rem*perDay; if(cost<amount) amount=cost;} const code=(document.getElementById('renew-discount').value||'').trim().toUpperCase(); if(code && days>=31){ const f=(extras.discounts||[]).find(d=>d.code===code && (!d.expire || new Date(d.expire)>=new Date())); if(f && days>=(f.minDays||31)){ amount=Math.round(amount*(100-f.percent)/100); }} document.getElementById('renew-amount').textContent=amount.toLocaleString('vi-VN')+' đ'; const content=`${q.id}_${(q.name||'').toUpperCase().replace(/\s+/g,' ')}_${days}`; document.getElementById('renew-content').textContent='Nội dung chuyển khoản: '+content; const qr=`https://img.vietqr.io/image/MB-68610042009-compact.png?amount=${amount}&addInfo=${encodeURIComponent(content)}&accountName=${encodeURIComponent('NGUYEN HOANG GIANG')}`; document.getElementById('renew-qr').src=qr; }
         function copyRenewContent(){ const t=document.getElementById('renew-content').textContent.replace('Nội dung chuyển khoản: ',''); navigator.clipboard.writeText(t).then(()=>alert('Đã sao chép nội dung')); }
-        async function submitRenewRequest(){ try{ const q=getQuery(); const days=Math.max(1,parseInt(document.getElementById('renew-days').value||'30',10)); const amount=parseInt((document.getElementById('renew-amount').textContent||'0').replace(/\D/g,''),10)||0; const content=document.getElementById('renew-content').textContent.replace('Nội dung chuyển khoản: ',''); const file=document.getElementById('renew-bill').files[0]; let billUrl=''; if(file){ const form=new FormData(); form.append('image',file); const r=await fetch('https://api.imgbb.com/1/upload?key=d46a4b1117287a127e5ae5e55e193046',{method:'POST',body:form}); const j=await r.json(); if(j.success) billUrl=j.data.url; } const state=await (window.remoteStore&&window.remoteStore.getAdminState?window.remoteStore.getAdminState():Promise.resolve({}))||{}; const renewals=Array.isArray(state.renewals)?state.renewals:[]; renewals.push({id:q.id,name:q.name,days,amount,content,billUrl,status:'pending',createdAt:Date.now()}); state.renewals=renewals; await window.remoteStore.setAdminState(state); alert('Đã gửi yêu cầu gia hạn. Vui lòng chờ admin duyệt.'); location.href='index.html'; } catch(e){ alert('Lỗi gửi yêu cầu: '+e.message); } }
+        async function submitRenewRequest(){ try{ const q=getQuery(); const days=Math.max(1,parseInt(document.getElementById('renew-days').value||'30',10)); const amount=parseInt((document.getElementById('renew-amount').textContent||'0').replace(/\D/g,''),10)||0; const content=document.getElementById('renew-content').textContent.replace('Nội dung chuyển khoản: ',''); const file=document.getElementById('renew-bill').files[0]; let billUrl=''; if(file){ const form=new FormData(); form.append('image',file); const r=await fetch('https://api.imgbb.com/1/upload?key=d46a4b1117287a127e5ae5e55e193046',{method:'POST',body:form}); const j=await r.json(); if(j.success) billUrl=j.data.url; } const remote=window.remoteStore; let state={}; if(remote && remote.getAdminState){ try{ state=await remote.getAdminState()||{}; }catch(_){ state={}; } } const renewals=Array.isArray(state.renewals)?state.renewals:[]; renewals.push({id:q.id,name:q.name,days,amount,content,billUrl,status:'pending',createdAt:Date.now()}); state.renewals=renewals; if(remote && remote.isConfigured && remote.isConfigured() && remote.setAdminState){ await remote.setAdminState(state); } else { try{ const cached=localStorage.getItem('admin_extras'); const extras=cached?JSON.parse(cached):{}; extras.renewals=renewals; localStorage.setItem('admin_extras', JSON.stringify(extras)); }catch(_){} } alert('Đã gửi yêu cầu gia hạn. Vui lòng chờ admin duyệt.'); location.href='index.html'; } catch(e){ alert('Lỗi gửi yêu cầu: '+e.message); } }
         document.addEventListener('DOMContentLoaded', updateRenewAmount);
     </script>
 </body>
