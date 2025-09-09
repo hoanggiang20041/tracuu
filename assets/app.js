@@ -429,7 +429,7 @@ function createWarrantyCard(warranty, customer, index) {
 				<button class="download-btn" onclick="downloadImage('${warranty.image || 'https://via.placeholder.com/400x200?text=No+Image'}', '${customer.name}', '${customer.id}', '${warranty.end}')">
 					<i class="fas fa-download"></i> Tải ảnh
 				</button>
-				${!isActive ? `<button class="download-btn" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);" onclick="showRenewModal({id: '${customer.id}', name: '${customer.name}'})"><i class=\"fas fa-sync\"></i> Gia hạn</button>` : ''}
+				${!isActive ? `<a class="download-btn" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); text-decoration:none;" href="renew.html?id=${customer.id}&name=${encodeURIComponent(customer.name)}"><i class=\"fas fa-sync\"></i> Gia hạn</a>` : ''}
 			</div>
 		</div>
 	`;
