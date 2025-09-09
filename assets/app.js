@@ -495,6 +495,9 @@ document.addEventListener("DOMContentLoaded", function() {
 			if (greet) greet.textContent = (this.value && this.value.trim()) ? this.value.trim() : 'Quý khách';
 		});
 	}
+
+	// Đảm bảo modal ảnh nằm cuối body để luôn nổi trên mọi lớp
+	try { if (imageModal && imageModal.parentNode !== document.body) { document.body.appendChild(imageModal); } } catch(_) {}
 });
 
 // Hàm cập nhật thời gian và ngày tháng
