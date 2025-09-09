@@ -7,10 +7,12 @@
 
 body {
 	font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	background: linear-gradient(135deg, #0f172a 0%, #111827 100%);
 	min-height: 100vh;
-	color: #333;
+	color: #e5e7eb;
 	line-height: 1.6;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 
 /* Container chính */
@@ -21,26 +23,45 @@ body {
 	position: relative;
 }
 
-/* Header với animation */
+/* Header chuyên nghiệp */
 .header {
+	margin-bottom: 40px;
+	padding: 30px 0;
+	animation: slideDown 0.8s ease-out;
+}
+
+.header-content {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 40px;
-	padding: 20px 0;
-	animation: slideDown 0.8s ease-out;
+	background: rgba(255,255,255,0.06);
+	padding: 25px 30px;
+	border-radius: 20px;
+	backdrop-filter: blur(20px);
+	border: 1px solid rgba(255,255,255,0.08);
+	box-shadow: 0 20px 60px rgba(0,0,0,0.1);
 }
 
 .logo {
 	display: flex;
 	align-items: center;
-	gap: 15px;
+	gap: 20px;
 }
 
 .logo i {
-	font-size: 2.5rem;
+	font-size: 3rem;
 	color: #fff;
 	animation: pulse 2s infinite;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.logo-text {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
 }
 
 .title {
@@ -48,6 +69,34 @@ body {
 	font-weight: 700;
 	color: #fff;
 	text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+	margin: 0;
+}
+
+.subtitle {
+	font-size: 1rem;
+	color: rgba(255,255,255,0.8);
+	font-weight: 400;
+	margin: 0;
+}
+
+.header-info {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.info-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: rgba(255,255,255,0.9);
+	font-size: 0.9rem;
+	font-weight: 500;
+}
+
+.info-item i {
+	color: #fff;
+	font-size: 1rem;
 }
 
 /* Ẩn link admin */
@@ -242,6 +291,7 @@ body {
 	width: 100%;
 	height: auto;
 	display: block;
+	object-fit: contain;
 }
 
 .modal-actions {
@@ -272,7 +322,7 @@ body {
 
 /* Kết quả tìm kiếm */
 .result {
-	background: rgba(255,255,255,0.95);
+	background: rgba(17,24,39,0.9);
 	border-radius: 20px;
 	padding: 30px;
 	box-shadow: 0 20px 60px rgba(0,0,0,0.1);
@@ -301,13 +351,13 @@ body {
 .customer-details h2 {
 	font-size: 2rem;
 	font-weight: 700;
-	color: #333;
+	color: #f9fafb;
 	margin-bottom: 8px;
 }
 
 .customer-id {
 	font-size: 1.1rem;
-	color: #666;
+	color: #9ca3af;
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -325,12 +375,12 @@ body {
 }
 
 .warranty-card {
-	background: #fff;
+	background: #0b1220;
 	border-radius: 16px;
 	overflow: hidden;
 	box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 	transition: all 0.3s ease;
-	border: 1px solid #f0f0f0;
+	border: 1px solid rgba(255,255,255,0.06);
 }
 
 .warranty-card:hover {
@@ -399,7 +449,7 @@ body {
 .warranty-title {
 	font-size: 1.2rem;
 	font-weight: 600;
-	color: #333;
+	color: #f9fafb;
 	margin-bottom: 15px;
 }
 
@@ -408,7 +458,7 @@ body {
 	justify-content: space-between;
 	margin-bottom: 15px;
 	font-size: 0.9rem;
-	color: #666;
+	color: #9ca3af;
 }
 
 .warranty-status {
@@ -509,20 +559,36 @@ body {
 		padding: 15px;
 	}
 	
-	.header {
+	.header-content {
 		flex-direction: column;
 		gap: 20px;
 		text-align: center;
+		padding: 20px;
+	}
+	
+	.logo {
+		flex-direction: column;
+		gap: 15px;
 	}
 	
 	.title {
 		font-size: 1.8rem;
 	}
 	
+	.subtitle {
+		font-size: 0.9rem;
+	}
+	
+	.header-info {
+		flex-direction: row;
+		gap: 20px;
+		justify-content: center;
+	}
+	
 	.search-container {
 		grid-template-columns: 1fr;
 		gap: 15px;
-		padding: 20px;
+		padding: 16px;
 	}
 	
 	.warranty-grid {
@@ -537,6 +603,37 @@ body {
 	
 	.customer-details h2 {
 		font-size: 1.6rem;
+	}
+
+	/* Larger touch targets */
+	.search-field input,
+	.search-btn,
+	.download-btn,
+	.close-modal {
+		min-height: 48px;
+	}
+
+	/* Modal fit on small screens */
+	.modal-content {
+		max-width: 100%;
+		max-height: 100%;
+		border-radius: 12px;
+	}
+
+	body {
+		padding-bottom: env(safe-area-inset-bottom);
+		padding-left: env(safe-area-inset-left);
+		padding-right: env(safe-area-inset-right);
+	}
+	
+	.footer-content {
+		grid-template-columns: 1fr;
+		gap: 30px;
+		text-align: center;
+	}
+	
+	.footer-section h3 {
+		justify-content: center;
 	}
 }
 
@@ -584,4 +681,77 @@ body {
 .days-remaining.unlimited {
     background-color: #cce5ff;
     color: #004085;
+}
+
+/* Footer chuyên nghiệp */
+.footer {
+	background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+	color: #fff;
+	margin-top: 60px;
+	padding: 40px 0 20px;
+	border-top: 3px solid #667eea;
+}
+
+.footer-content {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 20px;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	gap: 40px;
+}
+
+.footer-section h3 {
+	font-size: 1.3rem;
+	font-weight: 600;
+	margin-bottom: 20px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	color: #fff;
+}
+
+.footer-section h3 i {
+	color: #667eea;
+	font-size: 1.2rem;
+}
+
+.footer-section p {
+	color: rgba(255,255,255,0.85);
+	line-height: 1.6;
+	margin-bottom: 15px;
+}
+
+.footer-section ul {
+	list-style: none;
+	padding: 0;
+}
+
+.footer-section ul li {
+	color: rgba(255,255,255,0.8);
+	margin-bottom: 10px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.footer-link { color: #fff; text-decoration: underline; }
+.footer-link:hover { opacity: 0.85; }
+
+.footer-section ul li i {
+	color: #28a745;
+	font-size: 0.9rem;
+}
+
+.footer-bottom {
+	border-top: 1px solid rgba(255,255,255,0.1);
+	margin-top: 30px;
+	padding-top: 20px;
+	text-align: center;
+}
+
+.footer-bottom p {
+	color: rgba(255,255,255,0.6);
+	font-size: 0.9rem;
+	margin: 0;
 }

@@ -7,7 +7,7 @@ class HiddenAuth {
         this.remoteEnabled = true;
     }
     
-    // Tạo hoặc lấy global secret key (cố định cho tất cả sessions)
+    // Tạo hoặc lấy global secret key (CỐ ĐỊNH cho tất cả sessions)
     getOrCreateGlobalSecretKey() {
         try {
             // Try to get existing global secret key
@@ -20,16 +20,17 @@ class HiddenAuth {
                 }
             }
             
-            // Create new global secret key
-            const base = "admin_access_2024_global";
-            const timestamp = Math.floor(Date.now() / (1000 * 60 * 60 * 24)); // Thay đổi mỗi ngày
-            const secretKey = btoa(base + timestamp);
+            // Create FIXED global secret key (không thay đổi theo thời gian)
+            const base = "admin_access_2024_global_fixed";
+            const secretKey = btoa(base); // Không có timestamp để đảm bảo cố định
             
-            // Ensure instance uses the new secret and a stable challenge before hashing
+            // Generate FIXED challenge (cố định cho tất cả sessions)
+            const challenge = "fixed_challenge_2024";
+            
+            // Ensure instance uses the new secret and challenge before hashing
             this.secretKey = secretKey;
-            if (!this.challenge) {
-                this.challenge = this.generateChallenge();
-            }
+            this.challenge = challenge;
+            
             // Save global admin data (hash computed with the instance's secret/challenge)
             const globalAdminData = {
                 secretKey: this.secretKey,
@@ -41,25 +42,20 @@ class HiddenAuth {
             localStorage.setItem(this.globalAdminKey, JSON.stringify(globalAdminData));
             sessionStorage.setItem(this.globalAdminKey, JSON.stringify(globalAdminData));
             
-            console.log('Created new global secret key');
+            console.log('Created new FIXED global secret key');
             return secretKey;
         } catch (error) {
             console.error('Failed to get/create global secret key:', error);
-            // Fallback to old method
-            const base = "admin_access_2024";
-            const timestamp = Math.floor(Date.now() / (1000 * 60 * 60));
-            return btoa(base + timestamp);
+            // Fallback to fixed method
+            const base = "admin_access_2024_fixed";
+            return btoa(base);
         }
     }
     
-    // Tạo challenge ngẫu nhiên
+    // Tạo challenge CỐ ĐỊNH (không ngẫu nhiên để đồng bộ)
     generateChallenge() {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let result = '';
-        for (let i = 0; i < 16; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return result;
+        // Sử dụng challenge cố định để đảm bảo đồng bộ giữa các sessions
+        return "fixed_challenge_2024";
     }
     
     // Hàm hash đơn giản và tương thích
@@ -234,16 +230,16 @@ class HiddenAuth {
         window.dispatchEvent(new CustomEvent('adminPasswordChanged'));
     }
     
-    // Reset and recreate global admin account with correct hash
+    // Reset and recreate global admin account with FIXED hash
     resetGlobalAdminAccount() {
         try {
             // Clear existing data
             localStorage.removeItem(this.globalAdminKey);
             sessionStorage.removeItem(this.globalAdminKey);
             
-            // Create new secret/challenge and set on instance BEFORE hashing
-            const secretKey = this.getOrCreateGlobalSecretKey();
-            const challenge = this.generateChallenge();
+            // Create FIXED secret/challenge and set on instance BEFORE hashing
+            const secretKey = btoa("admin_access_2024_global_fixed");
+            const challenge = "fixed_challenge_2024";
             this.secretKey = secretKey;
             this.challenge = challenge;
             
@@ -259,15 +255,13 @@ class HiddenAuth {
             sessionStorage.setItem(this.globalAdminKey, JSON.stringify(globalAdminData));
             // Persist to remote as well
             this.persistToRemote(globalAdminData);
-            // Persist to remote (best-effort)
-            this.persistToRemote(globalAdminData);
             
             // Update current instance
             this.secretKey = secretKey;
             this.challenge = challenge;
             
-            console.log('Global admin account reset with correct hash');
-            return { success: true, message: 'Global admin account đã được reset với hash đúng' };
+            console.log('Global admin account reset with FIXED hash');
+            return { success: true, message: 'Global admin account đã được reset với hash CỐ ĐỊNH' };
         } catch (error) {
             console.error('Failed to reset global admin account:', error);
             return { success: false, message: 'Lỗi khi reset global admin account: ' + error.message };

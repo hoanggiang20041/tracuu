@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API Connection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Test API Connection</h1>
+    
+    <div class="test-section">
+        <h2>1. Test Local API Endpoint</h2>
+        <button onclick="testLocalAPI()">Test /api/warranty-data</button>
+        <div id="local-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Test JSONBin Direct Connection</h2>
+        <button onclick="testJSONBin()">Test JSONBin.io Direct</button>
+        <div id="jsonbin-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Test Fallback Data</h2>
+        <button onclick="testFallback()">Test Fallback Data</button>
+        <div id="fallback-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Environment Check</h2>
+        <div id="env-info"></div>
+    </div>
+
+    <script>
+        // Test local API endpoint
+        async function testLocalAPI() {
+            const resultDiv = document.getElementById('local-result');
+            resultDiv.innerHTML = '<p>🔄 Testing local API...</p>';
+            
+            try {
+                const response = await fetch('/api/warranty-data', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Local API working!</p>
+                        <p>Status: ${response.status}</p>
+                        <p>Records: ${Array.isArray(data) ? data.length : 'N/A'}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Local API error</p>
+                        <p>Status: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Network error</p>
+                    <p>Error: ${error.message}</p>
+                `;
+            }
+        }
+        
+        // Test JSONBin direct connection (requires credentials)
+        async function testJSONBin() {
+            const resultDiv = document.getElementById('jsonbin-result');
+            resultDiv.innerHTML = '<p>🔄 Testing JSONBin direct...</p>';
+            
+            // This would need actual credentials
+            resultDiv.innerHTML = `
+                <p class="warning">⚠️ JSONBin test requires credentials</p>
+                <p>Check your environment variables:</p>
+                <ul>
+                    <li>JSONBIN_ID</li>
+                    <li>JSONBIN_KEY</li>
+                </ul>
+            `;
+        }
+        
+        // Test fallback data
+        function testFallback() {
+            const resultDiv = document.getElementById('fallback-result');
+            
+            const fallbackData = [
+                {
+                    "id": "KH001",
+                    "name": "Nguyễn Văn An",
+                    "title": "Bảo hành điện thoại iPhone 14",
+                    "image": "https://via.placeholder.com/400x200?text=iPhone+14+Warranty",
+                    "start": "2024-01-15",
+                    "end": "2025-01-15"
+                },
+                {
+                    "id": "KH002", 
+                    "name": "Trần Thị Bình",
+                    "title": "Bảo hành laptop Dell XPS",
+                    "image": "https://via.placeholder.com/400x200?text=Dell+XPS+Warranty",
+                    "start": "2024-02-01",
+                    "end": "2025-02-01"
+                }
+            ];
+            
+            resultDiv.innerHTML = `
+                <p class="success">✅ Fallback data available</p>
+                <p>Records: ${fallbackData.length}</p>
+                <pre>${JSON.stringify(fallbackData, null, 2)}</pre>
+            `;
+        }
+        
+        // Environment info
+        function showEnvInfo() {
+            const envDiv = document.getElementById('env-info');
+            
+            const info = {
+                'User Agent': navigator.userAgent,
+                'Current URL': window.location.href,
+                'Protocol': window.location.protocol,
+                'Host': window.location.host,
+                'Pathname': window.location.pathname
+            };
+            
+            envDiv.innerHTML = `
+                <h3>Environment Information</h3>
+                <pre>${JSON.stringify(info, null, 2)}</pre>
+            `;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            showEnvInfo();
+        });
+    </script>
+</body>
+</html>

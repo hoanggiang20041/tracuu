@@ -10,8 +10,8 @@ class RemoteStore {
         if (!this.config && window.JSONBIN_DEFAULT && window.JSONBIN_DEFAULT.binId && window.JSONBIN_DEFAULT.masterKey) {
             this.saveConfig({ binId: window.JSONBIN_DEFAULT.binId, masterKey: window.JSONBIN_DEFAULT.masterKey });
         }
-        // Switch to proxy (server-side) to avoid exposing keys on client
-        this.baseUrl = 'https://tracuu-5j4.pages.dev/api/admin-state'; // empty: we'll use relative /api endpoints provided by serverless proxy
+        // Use relative proxy endpoint (server-side) to avoid exposing keys on client
+        this.baseUrl = '/api/admin-state';
     }
 
     loadConfig() {

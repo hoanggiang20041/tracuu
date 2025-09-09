@@ -1,8 +1,8 @@
-// Production Guard - Chống debug và ẩn thông tin nhạy cảm
+// Production Guard - CHỈ tắt console logs, KHÔNG chặn developer tools
 (function() {
 	'use strict';
 	
-	// Disable console logs
+	// Disable console logs only (for production)
 	if (typeof console !== 'undefined') {
 		console.log = console.warn = console.error = console.info = console.debug = function() {};
 	}
@@ -14,20 +14,7 @@
 		}
 	}, 1000);
 	
-	// Disable developer tools detection
-	let devtools = {open: false, orientation: null};
-	const threshold = 160;
-	
-	setInterval(function() {
-		if (window.outerHeight - window.innerHeight > threshold || 
-			window.outerWidth - window.innerWidth > threshold) {
-			if (!devtools.open) {
-				devtools.open = true;
-				// Redirect or show warning
-				document.body.innerHTML = '<div style="text-align:center;padding:50px;font-family:Arial;"><h1>Access Denied</h1><p>Developer tools detected. Please close and refresh the page.</p></div>';
-			}
-		}
-	}, 500);
+	// REMOVED: Developer tools detection - không chặn dev tools nữa
 	
 })();
 
@@ -66,17 +53,32 @@ function hideImageModal() {
 }
 
 // Tải ảnh về
-function downloadImage(imageSrc, customerName, customerId, endDate) {
-	// Tạo tên file theo format: hoten_id_ngayhethanbaohanh
-	const fileName = `${customerName}_${customerId}_${endDate}.jpg`;
-	
-	// Tạo link download
-	const link = document.createElement('a');
-	link.href = imageSrc;
-	link.download = fileName;
-	document.body.appendChild(link);
-	link.click();
-	document.body.removeChild(link);
+async function downloadImage(imageSrc, customerName, customerId, endDate) {
+	const safe = (s)=> (s||'').toString().replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_\-]/g,'');
+	const fileName = `${safe(customerName)}_${safe(customerId)}_${safe(endDate||'')}.jpg`;
+
+	try {
+		const resp = await fetch(imageSrc, { mode: 'cors' });
+		const blob = await resp.blob();
+		const url = URL.createObjectURL(blob);
+
+		if (navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: blob.type||'image/jpeg' })] })) {
+			const file = new File([blob], fileName, { type: blob.type||'image/jpeg' });
+			await navigator.share({ files: [file], title: 'Phiếu bảo hành', text: fileName });
+			URL.revokeObjectURL(url);
+			return;
+		}
+
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = fileName;
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		setTimeout(()=>URL.revokeObjectURL(url), 1000);
+	} catch (e) {
+		window.open(imageSrc, '_blank');
+	}
 }
 
 // Đóng modal khi click bên ngoài hoặc nút close
@@ -85,7 +87,43 @@ imageModal.onclick = (e) => {
 	if (e.target === imageModal) hideImageModal();
 };
 
-// Tải dữ liệu từ API proxy (ẩn thông tin nhạy cảm)
+// Dữ liệu fallback local
+const FALLBACK_DATA = [
+  {
+    "id": "KH001",
+    "name": "Nguyễn Văn An",
+    "title": "Bảo hành điện thoại iPhone 14",
+    "image": "https://via.placeholder.com/400x200?text=iPhone+14+Warranty",
+    "start": "2024-01-15",
+    "end": "2025-01-15"
+  },
+  {
+    "id": "KH002", 
+    "name": "Trần Thị Bình",
+    "title": "Bảo hành laptop Dell XPS",
+    "image": "https://via.placeholder.com/400x200?text=Dell+XPS+Warranty",
+    "start": "2024-02-01",
+    "end": "2025-02-01"
+  },
+  {
+    "id": "KH003",
+    "name": "Lê Văn Cường", 
+    "title": "Bảo hành máy tính bảng iPad",
+    "image": "https://via.placeholder.com/400x200?text=iPad+Warranty",
+    "start": "2024-03-10",
+    "end": "2025-03-10"
+  },
+  {
+    "id": "KH001",
+    "name": "Nguyễn Văn An",
+    "title": "Bảo hành tai nghe AirPods",
+    "image": "https://via.placeholder.com/400x200?text=AirPods+Warranty", 
+    "start": "2024-01-20",
+    "end": "2025-01-20"
+  }
+];
+
+// Tải dữ liệu từ API proxy với fallback
 async function loadData() {
 	try {
 		const res = await fetch(API_URL, { 
@@ -96,14 +134,57 @@ async function loadData() {
 		});
 		
 		if(!res.ok) {
-			throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+			// Nếu API trả 404 hoặc lỗi, thử lấy dữ liệu local
+			try {
+				if (res.status === 404) {
+					const localRes = await fetch('data/warranties.json', { cache: 'no-store' });
+					if (localRes.ok) {
+						const localData = await localRes.json();
+						window.__DATA_SOURCE = 'local';
+						return localData || [];
+					}
+				}
+			} catch(_) {}
+
+			// Thử parse error response để hiển thị thông báo chi tiết hơn
+			try {
+				const errorData = await res.json();
+				if (errorData.message) {
+					throw new Error(errorData.message);
+				}
+			} catch (parseError) {
+				// Nếu không parse được error response
+			}
+			throw new Error(`Lỗi kết nối: HTTP ${res.status} - ${res.statusText}`);
 		}
 		
 		const result = await res.json();
+		
+		// Kiểm tra nếu result có error
+		if (result && result.error) {
+			throw new Error(result.message || result.error);
+		}
+		// Đánh dấu nguồn dữ liệu
+		window.__DATA_SOURCE = 'api';
+		
 		return result || [];
 	} catch (error) {
-		// Không log lỗi chi tiết để tránh lộ thông tin
-		throw new Error(`Lỗi tải dữ liệu. Vui lòng thử lại sau.`);
+		// Hiển thị thông báo lỗi chi tiết hơn cho debugging
+		console.error('Load data error:', error);
+		// Thử dùng dữ liệu local như một bước nữa
+		try {
+			const localRes = await fetch('data/warranties.json', { cache: 'no-store' });
+			if (localRes.ok) {
+				const localData = await localRes.json();
+				window.__DATA_SOURCE = 'local';
+				return localData || [];
+			}
+		} catch(_) {}
+
+		// Sử dụng fallback data nếu API không hoạt động
+		console.warn('Using fallback data due to API error');
+		window.__DATA_SOURCE = 'fallback';
+		return FALLBACK_DATA;
 	}
 }
 
@@ -167,7 +248,7 @@ function calculateDaysRemaining(endDate) {
 }
 
 // Render kết quả tìm kiếm
-function render(customers) {
+function render(customers, isUsingFallback = false) {
 	const result = document.getElementById("result");
 	const warrantyList = document.getElementById("warrantyList");
 	const message = document.getElementById("message");
@@ -186,6 +267,8 @@ function render(customers) {
 	const customer = customers[0];
 	document.getElementById("customerName").textContent = customer.name || "Khách hàng";
 	document.getElementById("customerIdText").textContent = customer.id;
+	const greet = document.getElementById("greeting-name");
+	if (greet) greet.textContent = customer.name || "Quý khách";
 	
 	// Render tất cả phiếu bảo hành
 	customer.warranties.forEach((warranty, index) => {
@@ -195,7 +278,12 @@ function render(customers) {
 	
 	result.classList.remove("hidden");
 	message.className = "message success";
-	message.textContent = `Tìm thấy ${customers.length} khách hàng với ${customer.warranties.length} phiếu bảo hành`;
+	
+	let messageText = `Tìm thấy ${customers.length} khách hàng với ${customer.warranties.length} phiếu bảo hành`;
+	if (isUsingFallback) {
+		messageText += " (đang sử dụng dữ liệu mẫu)";
+	}
+	message.textContent = messageText;
 }
 
 // Tạo card phiếu bảo hành
@@ -275,12 +363,13 @@ async function onSubmit(e) {
 		showLoading();
 		
 		const records = await loadData();
+		const isUsingFallback = records === FALLBACK_DATA;
 		
 		const customers = normalize(records);
 		
 		const searchResults = searchCustomers(customers, searchName, searchId);
 		
-		render(searchResults);
+		render(searchResults, isUsingFallback);
 		
 	} catch (error) {
 		// Không log lỗi chi tiết để tránh lộ thông tin
@@ -294,14 +383,55 @@ async function onSubmit(e) {
 // Event listeners
 document.getElementById("lookup-form").addEventListener("submit", onSubmit);
 
-// Thêm hiệu ứng hover cho các card
+// Thêm hiệu ứng hover cho các card và cập nhật thời gian
 document.addEventListener("DOMContentLoaded", function() {
 	// Thêm class để trigger animation
 	const result = document.getElementById("result");
 	if (result) {
 		result.classList.add("slide-up");
 	}
+	
+	// Cập nhật thời gian và ngày tháng
+	updateDateTime();
+	setInterval(updateDateTime, 1000); // Cập nhật mỗi giây
+
+	// Greeting live update when typing name
+	const nameInput = document.getElementById('customerName');
+	if (nameInput) {
+		nameInput.addEventListener('input', function() {
+			const greet = document.getElementById('greeting-name');
+			if (greet) greet.textContent = (this.value && this.value.trim()) ? this.value.trim() : 'Quý khách';
+		});
+	}
 });
+
+// Hàm cập nhật thời gian và ngày tháng
+function updateDateTime() {
+	const now = new Date();
+	
+	// Cập nhật thời gian
+	const timeElement = document.getElementById("current-time");
+	if (timeElement) {
+		const timeString = now.toLocaleTimeString('vi-VN', {
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit'
+		});
+		timeElement.textContent = timeString;
+	}
+	
+	// Cập nhật ngày tháng
+	const dateElement = document.getElementById("current-date");
+	if (dateElement) {
+		const dateString = now.toLocaleDateString('vi-VN', {
+			weekday: 'long',
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric'
+		});
+		dateElement.textContent = dateString;
+	}
+}
 
 // Keyboard shortcuts
 document.addEventListener("keydown", function(e) {

@@ -7,6 +7,7 @@
 	<link rel="stylesheet" href="assets/style.css" />
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+	<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
 	
 	<!-- Production Guard: CHỈ tắt console, không chặn phím/chuột -->
 	<script>
@@ -23,7 +24,7 @@
 		})();
 	</script>
 </head>
-<body>
+<body class="dark">
 	<!-- Loading Overlay -->
 	<div id="loading-overlay" class="loading-overlay hidden">
 		<div class="loading-spinner">
@@ -46,11 +47,27 @@
 	</div>
 
 	<div class="container">
-		<!-- Header với animation -->
+		<!-- Header chuyên nghiệp -->
 		<header class="header">
-			<div class="logo">
-				<i class="fas fa-shield-alt"></i>
-				<h1 class="title">Tra cứu phiếu bảo hành</h1>
+			<div class="header-content">
+				<div class="logo">
+					<i class="fas fa-shield-alt"></i>
+					<div class="logo-text">
+						<h1 class="title">Tra cứu phiếu bảo hành</h1>
+						<p class="subtitle">Hệ thống quản lý bảo hành chuyên nghiệp</p>
+					</div>
+				</div>
+				<div class="header-info">
+					<div class="greeting">Xin chào, <span id="greeting-name">Quý khách</span>!</div>
+					<div class="info-item">
+						<i class="fas fa-clock"></i>
+						<span id="current-time"></span>
+					</div>
+					<div class="info-item">
+						<i class="fas fa-calendar"></i>
+						<span id="current-date"></span>
+					</div>
+				</div>
 			</div>
 		</header>
 
@@ -113,6 +130,28 @@
 		<!-- Thông báo -->
 		<div id="message" class="message"></div>
 	</div>
+
+	<!-- Footer chuyên nghiệp -->
+	<footer class="footer">
+		<div class="footer-content">
+			<div class="footer-section">
+				<h3><i class="fas fa-shield-alt"></i> Hệ thống Bảo Hành Hoàng Giang Media</h3>
+				<p>Nền tảng tra cứu bảo hành nhanh, chính xác và tiện lợi cho khách hàng.</p>
+			</div>
+			<div class="footer-section">
+				<h3><i class="fas fa-address-card"></i> Thông tin liên hệ</h3>
+				<p>
+					<i class="fab fa-facebook"></i>
+					Facebook: 
+					<a class="footer-link" href="https://www.facebook.com/giang.101004" target="_blank" rel="noopener noreferrer">Nguyễn Hoàng Giang</a>
+				</p>
+				<p>
+					<i class="fas fa-phone"></i>
+					SĐT: <strong>0522336052</strong>
+				</p>
+			</div>
+		</div>
+	</footer>
 
 	<script src="assets/app.js"></script>
 </body>
