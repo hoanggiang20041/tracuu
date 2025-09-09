@@ -239,11 +239,13 @@ body {
 	opacity: 0;
 	visibility: hidden;
 	transition: all 0.3s ease;
+    pointer-events: none; /* block clicks only when hidden */
 }
 
 .image-modal.show {
 	opacity: 1;
 	visibility: visible;
+    pointer-events: auto; /* clickable when shown */
 }
 
 .image-modal.hidden {
@@ -260,6 +262,7 @@ body {
 	box-shadow: 0 30px 80px rgba(0,0,0,0.5);
 	transform: scale(0.7);
 	transition: transform 0.3s ease;
+    z-index: 2147483650; /* ensure above any stacking context */
 }
 
 .image-modal.show .modal-content {

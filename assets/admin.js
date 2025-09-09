@@ -270,7 +270,7 @@ function renderRenewals(){
     const tbody = document.getElementById('renewals-tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
-    (adminExtras.renewals||[]).forEach((r, idx)=>{
+    (adminExtras.renewals||[]).slice().sort((a,b)=>b.createdAt-a.createdAt).forEach((r, idx)=>{
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td><code>${r.id}</code></td>
@@ -285,6 +285,12 @@ function renderRenewals(){
             </td>`;
         tbody.appendChild(tr);
     });
+}
+
+async function refreshRenewalsUI(){
+    await loadAdminExtras();
+    renderRenewals();
+    showNotification('Đã tải lại yêu cầu gia hạn', 'success');
 }
 
 async function approveRenewal(index){
@@ -1180,6 +1186,7 @@ window.filterWarranties = filterWarranties;
 window.checkDuplicateIds = checkDuplicateIds;
 window.cleanupDuplicateData = cleanupDuplicateData;
 window.validateAndFixData = validateAndFixData;
+window.refreshRenewalsUI = refreshRenewalsUI;
 window.resetForm = function() {
     console.log('Resetting form...');
     
