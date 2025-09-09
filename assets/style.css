@@ -21,6 +21,7 @@ body {
 	margin: 0 auto;
 	padding: 20px;
 	position: relative;
+	z-index: 2147483647; /* Ensure above any injected overlays */
 }
 
 /* Header chuyên nghiệp */
@@ -120,6 +121,7 @@ body {
 	border-radius: 20px;
 	box-shadow: 0 20px 60px rgba(0,0,0,0.1);
 	backdrop-filter: blur(20px);
+	z-index: 2147483647;
 }
 
 .search-field {
@@ -329,6 +331,7 @@ body {
 	box-shadow: 0 20px 60px rgba(0,0,0,0.1);
 	backdrop-filter: blur(20px);
 	animation: slideUp 0.8s ease-out;
+	z-index: 2147483647;
 }
 
 .customer-info {

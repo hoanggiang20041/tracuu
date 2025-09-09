@@ -9,7 +9,7 @@ let allCustomers = [];
 let currentEditId = null;
 // Admin extras persisted via remote admin-state
 let adminExtras = {
-    pricing: { pricePerWeek: 200000, pricePerDay: Math.round(200000/7) },
+    pricing: { tiers: [ { label:'1 tuần', days:7, price:200000 } ] },
     discounts: [], // {code, percent, minDays, expire}
     renewals: []   // {id, name, days, amount, content, billUrl, status}
 };
@@ -62,14 +62,7 @@ async function initializeAdmin() {
         }
         
         // Populate pricing inputs and tables
-        try {
-            const week = document.getElementById('price-per-week');
-            const day = document.getElementById('price-per-day');
-            if (week) week.value = adminExtras.pricing?.pricePerWeek ?? 200000;
-            if (day) day.value = adminExtras.pricing?.pricePerDay ?? Math.round((adminExtras.pricing?.pricePerWeek||200000)/7);
-            renderDiscounts();
-            renderRenewals();
-        } catch(_) {}
+        try { renderPricing(); renderDiscounts(); renderRenewals(); } catch(_) {}
         showNotification('Hệ thống admin đã sẵn sàng!', 'success');
     } catch (error) {
         console.error('Admin initialization error:', error);
@@ -205,15 +198,34 @@ async function loadAllData() {
     }
 }
 
-// ===== Pricing =====
-async function savePricing(){
-    const weekEl = document.getElementById('price-per-week');
-    const dayEl = document.getElementById('price-per-day');
-    if (!weekEl || !dayEl) return;
-    const pricePerWeek = Math.max(0, parseInt(weekEl.value || '200000', 10));
-    const pricePerDay = Math.max(0, parseInt(dayEl.value || String(Math.round(pricePerWeek/7)), 10));
-    adminExtras.pricing = { pricePerWeek, pricePerDay };
+// ===== Pricing (tiers) =====
+function renderPricing(){
+    const tbody = document.getElementById('pricing-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    (adminExtras.pricing?.tiers||[]).forEach((t, idx)=>{
+        const tr = document.createElement('tr');
+        const perDay = t.days>0 ? Math.round(t.price/t.days) : 0;
+        tr.innerHTML = `<td>${t.label}</td><td>${t.days}</td><td>${t.price.toLocaleString('vi-VN')}</td><td>${perDay.toLocaleString('vi-VN')}</td><td><button class="btn btn-danger btn-sm" onclick="deletePricingTier(${idx})"><i class='fas fa-trash'></i></button></td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+async function addPricingTier(){
+    const label = (document.getElementById('tier-label')?.value||'').trim() || 'Gói';
+    const days = Math.max(1, parseInt(document.getElementById('tier-days')?.value||'7',10));
+    const price = Math.max(0, parseInt(document.getElementById('tier-price')?.value||'200000',10));
+    if (!adminExtras.pricing.tiers) adminExtras.pricing.tiers = [];
+    adminExtras.pricing.tiers.push({ label, days, price });
     await saveAdminExtras();
+    renderPricing();
+    showNotification('Đã thêm gói giá', 'success');
+}
+
+async function deletePricingTier(index){
+    adminExtras.pricing.tiers.splice(index,1);
+    await saveAdminExtras();
+    renderPricing();
 }
 
 // ===== Discounts =====

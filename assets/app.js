@@ -78,8 +78,15 @@ function getAdminExtrasSync(){
 function updateRenewAmount(){
 	const extras = getAdminExtrasSync();
 	const days = Math.max(1, parseInt(document.getElementById('renew-days').value||'30',10));
-	const unit = extras.pricing?.pricePerDay || Math.round((extras.pricing?.pricePerWeek||200000)/7);
-	let amount = days * unit;
+	const tiers = (extras.pricing && extras.pricing.tiers) ? extras.pricing.tiers : [{ label:'1 tuần', days:7, price:200000 }];
+	const perDayFallback = Math.round((tiers[0]?.price||200000)/ (tiers[0]?.days||7));
+	let amount = days * perDayFallback;
+	for (const t of tiers){
+		const packs = Math.floor(days / t.days);
+		const remainder = days % t.days;
+		const cost = packs * t.price + remainder * perDayFallback;
+		if (cost < amount) amount = cost;
+	}
 	const code = (document.getElementById('renew-discount').value||'').trim().toUpperCase();
 	let applied = '';
 	if (code && days>= 31){
@@ -348,7 +355,8 @@ function render(customers, isUsingFallback = false) {
 	
 	// Hiển thị thông tin khách hàng đầu tiên
 	const customer = customers[0];
-	document.getElementById("customerName").textContent = customer.name || "Khách hàng";
+	const nameLabelEl = document.getElementById("customerNameLabel");
+	if (nameLabelEl) nameLabelEl.textContent = customer.name || "Khách hàng";
 	document.getElementById("customerIdText").textContent = customer.id;
 	const greet = document.getElementById("greeting-name");
 	if (greet) greet.textContent = customer.name || "Quý khách";

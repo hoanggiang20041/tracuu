@@ -867,18 +867,35 @@
 		<div id="pricing-tab" class="tab-content">
 			<div class="admin-form">
 				<h3 class="form-title"><i class="fas fa-money-bill-wave"></i> Cấu hình giá gia hạn</h3>
-				<div class="form-grid">
-					<div class="form-field">
-						<label><i class="fas fa-calendar-week"></i> Giá 1 tuần (VND)</label>
-						<input id="price-per-week" type="number" min="0" step="1000" placeholder="200000" />
+				<div class="admin-form" style="background:transparent; box-shadow:none; padding:0;">
+					<div class="table-controls" style="background:transparent; border:none; padding-left:0;">
+						<div class="form-grid" style="margin:0;">
+							<div class="form-field">
+								<label><i class="fas fa-tag"></i> Nhãn gói (ví dụ: 1 tuần)</label>
+								<input id="tier-label" type="text" placeholder="1 tuần" />
+							</div>
+							<div class="form-field">
+								<label><i class="fas fa-clock"></i> Số ngày</label>
+								<input id="tier-days" type="number" min="1" placeholder="7" />
+							</div>
+							<div class="form-field">
+								<label><i class="fas fa-dong-sign"></i> Giá (VND)</label>
+								<input id="tier-price" type="number" min="0" step="1000" placeholder="200000" />
+							</div>
+						</div>
+						<div class="form-actions">
+							<button class="btn btn-primary" onclick="addPricingTier()"><i class="fas fa-plus"></i> Thêm gói</button>
+						</div>
 					</div>
-					<div class="form-field">
-						<label><i class="fas fa-calculator"></i> Giá 1 ngày (auto = tuần/7)</label>
-						<input id="price-per-day" type="number" min="0" step="1000" placeholder="~28500" />
+					<div class="data-table" style="margin-top: 10px;">
+						<div class="table-header"><h2 class="table-title">Bảng giá</h2></div>
+						<div class="table-content">
+							<table>
+								<thead><tr><th>Nhãn</th><th>Số ngày</th><th>Giá</th><th>Giá/ngày</th><th>Thao tác</th></tr></thead>
+								<tbody id="pricing-tbody"></tbody>
+							</table>
+						</div>
 					</div>
-				</div>
-				<div class="form-actions">
-					<button class="btn btn-primary" onclick="savePricing()"><i class="fas fa-save"></i> Lưu giá</button>
 				</div>
 			</div>
 		</div>
