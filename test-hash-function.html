@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Hash Function</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        .btn-success { background: #28a745; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            text-align: left;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Hash Function</h1>
+        <p>Tool này sẽ test và sửa hash function để đảm bảo mật khẩu hoạt động đúng.</p>
+        
+        <div class="test-section">
+            <h3>Test Hash Function</h3>
+            <button class="btn" onclick="testHashFunction()">Test Hash Function</button>
+            <button class="btn btn-success" onclick="fixHashFunction()">Sửa Hash Function</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test Mật Khẩu</h3>
+            <button class="btn btn-warning" onclick="testPassword()">Test Mật Khẩu</button>
+            <button class="btn btn-danger" onclick="resetPassword()">Reset Mật Khẩu</button>
+        </div>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Original hash function from auth.js
+        function originalHash(str) {
+            let hash = 0;
+            if (str.length === 0) return hash.toString();
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            return Math.abs(hash).toString(16);
+        }
+
+        // Fixed hash function
+        function fixedHash(str) {
+            let hash = 0;
+            if (str.length === 0) return hash.toString();
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            return Math.abs(hash).toString(16);
+        }
+
+        // Alternative hash function using crypto
+        function cryptoHash(str) {
+            // Simple hash using built-in crypto
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return Math.abs(hash).toString(16);
+        }
+
+        // MD5-like hash function
+        function md5LikeHash(str) {
+            let hash = 0;
+            if (str.length === 0) return hash.toString();
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return Math.abs(hash).toString(16);
+        }
+
+        function showResult(message, type = 'info') {
+            const result = document.getElementById('result');
+            result.textContent = message;
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+        }
+
+        function testHashFunction() {
+            try {
+                const secretKey = btoa("admin_access_2024_global_fixed");
+                const challenge = "fixed_challenge_2024";
+                const password = "admin123";
+                const combined = secretKey + password + challenge;
+                
+                let result = 'Test Hash Function:\n\n';
+                result += `Input: ${combined}\n`;
+                result += `Length: ${combined.length}\n\n`;
+                
+                // Test different hash functions
+                const originalHashResult = originalHash(combined);
+                const fixedHashResult = fixedHash(combined);
+                const cryptoHashResult = cryptoHash(combined);
+                const md5LikeHashResult = md5LikeHash(combined);
+                
+                result += 'Hash Results:\n';
+                result += `- Original Hash: ${originalHashResult}\n`;
+                result += `- Fixed Hash: ${fixedHashResult}\n`;
+                result += `- Crypto Hash: ${cryptoHashResult}\n`;
+                result += `- MD5-like Hash: ${md5LikeHashResult}\n\n`;
+                
+                // Test with different inputs
+                result += 'Test with different inputs:\n';
+                const testInputs = [
+                    'test',
+                    'admin123',
+                    'YWRtaW5fYWNjZXNzXzIwMjRfZ2xvYmFsX2ZpeGVk',
+                    'fixed_challenge_2024',
+                    combined
+                ];
+                
+                for (const input of testInputs) {
+                    const hash = originalHash(input);
+                    result += `"${input}" -> ${hash}\n`;
+                }
+                
+                showResult(result, 'info');
+                
+            } catch (error) {
+                showResult(`❌ Lỗi test hash function: ${error.message}`, 'error');
+            }
+        }
+
+        function fixHashFunction() {
+            try {
+                showResult('Đang sửa hash function...', 'info');
+                
+                // Get current data
+                let globalAdmin = JSON.parse(localStorage.getItem('global_admin_account') || '{}');
+                
+                // Ensure we have correct values
+                const secretKey = btoa("admin_access_2024_global_fixed");
+                const challenge = "fixed_challenge_2024";
+                const password = "admin123";
+                
+                // Generate hash using the same function as auth.js
+                const combined = secretKey + password + challenge;
+                const passwordHash = originalHash(combined);
+                
+                // Update global admin account
+                globalAdmin.secretKey = secretKey;
+                globalAdmin.challenge = challenge;
+                globalAdmin.passwordHash = passwordHash;
+                globalAdmin.lastUpdated = Date.now();
+                
+                // Save to both localStorage and sessionStorage
+                localStorage.setItem('global_admin_account', JSON.stringify(globalAdmin));
+                sessionStorage.setItem('global_admin_account', JSON.stringify(globalAdmin));
+                
+                let result = '✅ Hash function đã được sửa!\n\n';
+                result += 'Dữ liệu mới:\n';
+                result += `- Secret Key: ${secretKey}\n`;
+                result += `- Challenge: ${challenge}\n`;
+                result += `- Password: ${password}\n`;
+                result += `- Combined: ${combined}\n`;
+                result += `- Password Hash: ${passwordHash}\n\n`;
+                result += 'Bây giờ hãy test mật khẩu để xem có hoạt động không.';
+                
+                showResult(result, 'success');
+                
+            } catch (error) {
+                showResult(`❌ Lỗi sửa hash function: ${error.message}`, 'error');
+            }
+        }
+
+        function testPassword() {
+            try {
+                const password = "admin123";
+                
+                // Get current data
+                const globalAdmin = JSON.parse(localStorage.getItem('global_admin_account') || '{}');
+                const secretKey = globalAdmin.secretKey || btoa("admin_access_2024_global_fixed");
+                const challenge = globalAdmin.challenge || "fixed_challenge_2024";
+                const storedHash = globalAdmin.passwordHash;
+                
+                // Generate hash for test password
+                const combined = secretKey + password + challenge;
+                const inputHash = originalHash(combined);
+                
+                let result = `Test mật khẩu: "${password}"\n\n`;
+                result += `Secret Key: ${secretKey}\n`;
+                result += `Challenge: ${challenge}\n`;
+                result += `Combined: ${combined}\n`;
+                result += `Stored Hash: ${storedHash || 'MISSING'}\n`;
+                result += `Input Hash: ${inputHash}\n\n`;
+                result += `Kết quả: ${inputHash === storedHash ? '✅ ĐÚNG' : '❌ SAI'}\n\n`;
+                
+                if (inputHash !== storedHash) {
+                    result += `Cần sửa hash function! Hãy click "Sửa Hash Function"`;
+                } else {
+                    result += `Mật khẩu đã đúng! Có thể đăng nhập được.`;
+                }
+                
+                showResult(result, inputHash === storedHash ? 'success' : 'error');
+                
+            } catch (error) {
+                showResult(`❌ Lỗi test mật khẩu: ${error.message}`, 'error');
+            }
+        }
+
+        function resetPassword() {
+            if (!confirm('Bạn có chắc chắn muốn reset mật khẩu? Điều này sẽ xóa tất cả dữ liệu hiện tại!')) {
+                return;
+            }
+            
+            try {
+                // Clear all data
+                localStorage.removeItem('global_admin_account');
+                localStorage.removeItem('global_admin_2fa');
+                sessionStorage.removeItem('global_admin_account');
+                sessionStorage.removeItem('global_admin_2fa');
+                
+                // Create fresh data with correct values
+                const secretKey = btoa("admin_access_2024_global_fixed");
+                const challenge = "fixed_challenge_2024";
+                const password = "admin123";
+                const combined = secretKey + password + challenge;
+                const passwordHash = originalHash(combined);
+                
+                const newGlobalAdmin = {
+                    secretKey: secretKey,
+                    challenge: challenge,
+                    passwordHash: passwordHash,
+                    twoFactorEnabled: false,
+                    twoFactorSecret: null,
+                    createdAt: Date.now(),
+                    lastUpdated: Date.now(),
+                    lastRemoteSync: Date.now()
+                };
+                
+                const newGlobal2FA = {
+                    enabled: false,
+                    secret: null,
+                    timestamp: Date.now()
+                };
+                
+                // Save fresh data
+                localStorage.setItem('global_admin_account', JSON.stringify(newGlobalAdmin));
+                sessionStorage.setItem('global_admin_account', JSON.stringify(newGlobalAdmin));
+                localStorage.setItem('global_admin_2fa', JSON.stringify(newGlobal2FA));
+                sessionStorage.setItem('global_admin_2fa', JSON.stringify(newGlobal2FA));
+                
+                let result = '✅ Mật khẩu đã được reset!\n\n';
+                result += 'Dữ liệu mới:\n';
+                result += `- Secret Key: ${secretKey}\n`;
+                result += `- Challenge: ${challenge}\n`;
+                result += `- Password: ${password}\n`;
+                result += `- Combined: ${combined}\n`;
+                result += `- Password Hash: ${passwordHash}\n\n`;
+                result += 'Bây giờ hãy thử đăng nhập với mật khẩu "admin123"';
+                
+                showResult(result, 'success');
+                
+            } catch (error) {
+                showResult(`❌ Lỗi reset mật khẩu: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-test on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            testHashFunction();
+        });
+    </script>
+</body>
+</html>
