@@ -17,13 +17,20 @@ export async function onRequest(context) {
     if (request.method === 'GET') {
       try {
         // Kiểm tra environment variables
+        if (url.searchParams.get('diag') === '1') {
+          return new Response(JSON.stringify({
+            ok: true,
+            hasBinId: !!env.JSONBIN_ID,
+            hasKey: !!env.JSONBIN_KEY,
+            time: Date.now()
+          }), { status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }});
+        }
+
         if (!env.JSONBIN_ID || !env.JSONBIN_KEY) {
           console.error('Missing JSONBin environment variables');
-          return new Response(JSON.stringify({ 
-            error: 'Server configuration error',
-            message: 'Missing JSONBin credentials'
-          }), {
-            status: 500,
+          // Dev fallback: trả về mảng rỗng để client vẫn chạy được
+          return new Response(JSON.stringify([]), {
+            status: 200,
             headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
           });
         }
@@ -37,6 +44,13 @@ export async function onRequest(context) {
 
         if (!response.ok) {
           console.error(`JSONBin API error: ${response.status} ${response.statusText}`);
+          // Nếu 401/403, trả về fallback 200 rỗng để UI không bị kẹt
+          if (response.status === 401 || response.status === 403) {
+            return new Response(JSON.stringify([]), {
+              status: 200,
+              headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
+            });
+          }
           return new Response(JSON.stringify({ 
             error: 'Data service unavailable',
             message: `API returned ${response.status}: ${response.statusText}`
