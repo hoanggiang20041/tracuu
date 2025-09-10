@@ -5,6 +5,8 @@ class HiddenAuth {
         this.secretKey = this.getOrCreateGlobalSecretKey();
         this.challenge = this.generateChallenge();
         this.remoteEnabled = true;
+        // Ensure local admin state is consistent with fixed config
+        this.ensureConsistentAdminState();
     }
     
     // Tạo hoặc lấy global secret key (CỐ ĐỊNH cho tất cả sessions)
@@ -68,6 +70,41 @@ class HiddenAuth {
             const base = "admin_access_2024_global_fixed";
             return btoa(base);
         }
+    }
+    
+    // Ensure local admin state uses fixed keys and valid hash
+    ensureConsistentAdminState() {
+        try {
+            const fixedSecret = btoa("admin_access_2024_global_fixed");
+            const fixedChallenge = "fixed_challenge_2024";
+            let raw = localStorage.getItem(this.globalAdminKey) || sessionStorage.getItem(this.globalAdminKey);
+            let data = raw ? JSON.parse(raw) : null;
+            const needsFix = !data || data.secretKey !== fixedSecret || data.challenge !== fixedChallenge || !data.passwordHash;
+            if (needsFix) {
+                // Lock instance to fixed values
+                this.secretKey = fixedSecret;
+                this.challenge = fixedChallenge;
+                // Preserve 2FA fields if present
+                const twoFactorEnabled = data && typeof data.twoFactorEnabled === 'boolean' ? data.twoFactorEnabled : false;
+                const twoFactorSecret = data && data.twoFactorSecret ? data.twoFactorSecret : null;
+                const globalAdminData = {
+                    secretKey: this.secretKey,
+                    challenge: this.challenge,
+                    createdAt: (data && data.createdAt) ? data.createdAt : Date.now(),
+                    passwordHash: this.encryptInput("admin123"),
+                    twoFactorEnabled,
+                    twoFactorSecret,
+                    lastUpdated: Date.now()
+                };
+                localStorage.setItem(this.globalAdminKey, JSON.stringify(globalAdminData));
+                sessionStorage.setItem(this.globalAdminKey, JSON.stringify(globalAdminData));
+                // Mark password fixed
+                localStorage.setItem('password_fixed', 'true');
+                if (!localStorage.getItem('password_fix_time')) {
+                    localStorage.setItem('password_fix_time', Date.now().toString());
+                }
+            }
+        } catch (_) { /* ignore */ }
     }
     
     // Tạo challenge CỐ ĐỊNH (không ngẫu nhiên để đồng bộ)
