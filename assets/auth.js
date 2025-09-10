@@ -46,8 +46,8 @@ class HiddenAuth {
             return secretKey;
         } catch (error) {
             console.error('Failed to get/create global secret key:', error);
-            // Fallback to fixed method
-            const base = "admin_access_2024_fixed";
+            // Fallback to fixed method - MUST match remote-store.js
+            const base = "admin_access_2024_global_fixed";
             return btoa(base);
         }
     }

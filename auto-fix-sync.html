@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Fix Sync Issues</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .fix-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+        .fix-container h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .fix-container p {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        .btn-success { background: #28a745; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-danger { background: #dc3545; }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            text-align: left;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-ok { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .status-warning { background: #ffc107; }
+        
+        .loading {
+            display: none;
+            margin: 20px 0;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="fix-container">
+        <h1><i class="fas fa-tools"></i> Auto Fix Sync Issues</h1>
+        <p>Tool này sẽ tự động sửa các vấn đề đồng bộ 2FA và mật khẩu giữa các máy.</p>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Đang sửa lỗi đồng bộ...</p>
+        </div>
+        
+        <div id="buttons">
+            <button class="btn btn-success" onclick="runAutoFix()">
+                <i class="fas fa-magic"></i> Tự động sửa lỗi
+            </button>
+            <button class="btn btn-warning" onclick="checkStatus()">
+                <i class="fas fa-info-circle"></i> Kiểm tra trạng thái
+            </button>
+            <button class="btn btn-danger" onclick="resetData()">
+                <i class="fas fa-trash"></i> Reset dữ liệu
+            </button>
+        </div>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="assets/totp-auth.js"></script>
+    <script src="assets/remote-store.js"></script>
+    <script src="assets/auth.js"></script>
+    <script src="assets/security.js"></script>
+    <script src="assets/sync-manager.js"></script>
+    <script src="fix-sync-issue.js"></script>
+
+    <script>
+        function showResult(message, type = 'info') {
+            const result = document.getElementById('result');
+            result.textContent = message;
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('buttons').style.display = show ? 'none' : 'block';
+        }
+
+        async function runAutoFix() {
+            showLoading(true);
+            showResult('Đang chạy auto-fix...', 'info');
+            
+            try {
+                // Run the auto-fix
+                await window.autoFixSync();
+                
+                // Check if it worked
+                const validationResult = window.validateSyncFix();
+                const testResult = await window.testSync();
+                
+                if (validationResult && testResult) {
+                    showResult('✅ Auto-fix hoàn thành thành công!\n\nTất cả các vấn đề đồng bộ đã được sửa.\nVui lòng refresh trang để áp dụng thay đổi.', 'success');
+                } else {
+                    showResult('⚠️ Auto-fix hoàn thành nhưng có thể còn vấn đề.\n\nVui lòng kiểm tra trạng thái để xem chi tiết.', 'warning');
+                }
+            } catch (error) {
+                showResult(`❌ Auto-fix thất bại:\n\n${error.message}`, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function checkStatus() {
+            showLoading(true);
+            showResult('Đang kiểm tra trạng thái...', 'info');
+            
+            try {
+                let result = 'Trạng thái hệ thống:\n\n';
+                
+                // Check system availability
+                const systems = {
+                    'Remote Store': !!window.remoteStore,
+                    'Hidden Auth': !!window.hiddenAuth,
+                    'Admin Security': !!window.adminSecurity,
+                    'Sync Manager': !!window.syncManager,
+                    'TOTP Auth': !!window.TOTPAuth
+                };
+                
+                result += 'Hệ thống:\n';
+                for (const [name, available] of Object.entries(systems)) {
+                    const status = available ? '✅' : '❌';
+                    result += `${status} ${name}\n`;
+                }
+                
+                // Check data
+                const globalAdmin = JSON.parse(localStorage.getItem('global_admin_account') || '{}');
+                const global2FA = JSON.parse(localStorage.getItem('global_admin_2fa') || '{}');
+                
+                result += '\nDữ liệu:\n';
+                result += `${globalAdmin.secretKey ? '✅' : '❌'} Secret Key\n`;
+                result += `${globalAdmin.challenge ? '✅' : '❌'} Challenge\n`;
+                result += `${globalAdmin.passwordHash ? '✅' : '❌'} Password Hash\n`;
+                result += `${global2FA.secret ? '✅' : '❌'} 2FA Secret\n`;
+                result += `${global2FA.enabled ? '✅' : '❌'} 2FA Enabled\n`;
+                
+                // Check consistency
+                const isConsistent = globalAdmin.twoFactorEnabled === global2FA.enabled && 
+                                   globalAdmin.twoFactorSecret === global2FA.secret;
+                result += `\nTính nhất quán: ${isConsistent ? '✅' : '❌'}\n`;
+                
+                // Check remote sync
+                if (window.remoteStore && window.remoteStore.isConfigured()) {
+                    try {
+                        const remoteData = await window.remoteStore.getAdminState();
+                        result += `\nRemote Sync: ${remoteData ? '✅' : '❌'}\n`;
+                    } catch (error) {
+                        result += `\nRemote Sync: ❌ (${error.message})\n`;
+                    }
+                } else {
+                    result += '\nRemote Sync: ❌ (Not configured)\n';
+                }
+                
+                showResult(result, 'info');
+            } catch (error) {
+                showResult(`❌ Lỗi kiểm tra trạng thái:\n\n${error.message}`, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function resetData() {
+            if (!confirm('Bạn có chắc chắn muốn reset TẤT CẢ dữ liệu? Hành động này không thể hoàn tác!')) {
+                return;
+            }
+            
+            try {
+                // Clear all sync-related data
+                localStorage.removeItem('global_admin_account');
+                localStorage.removeItem('global_admin_2fa');
+                localStorage.removeItem('sync_status');
+                localStorage.removeItem('sync_errors');
+                localStorage.removeItem('remote_admin_cache');
+                localStorage.removeItem('admin_security_data');
+                
+                sessionStorage.removeItem('global_admin_account');
+                sessionStorage.removeItem('global_admin_2fa');
+                sessionStorage.removeItem('admin_security_data');
+                
+                showResult('✅ Dữ liệu đã được reset thành công!\n\nVui lòng refresh trang để áp dụng thay đổi.', 'warning');
+            } catch (error) {
+                showResult(`❌ Lỗi reset dữ liệu:\n\n${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Auto-fix page loaded');
+        });
+    </script>
+</body>
+</html>

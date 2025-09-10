@@ -129,9 +129,11 @@ class RemoteStore {
             if (globalAdmin) {
                 const data = JSON.parse(globalAdmin);
                 
+                // Always use fixed values for secret key and challenge to ensure consistency
+                data.secretKey = btoa("admin_access_2024_global_fixed"); // Fixed across all machines
+                data.challenge = "fixed_challenge_2024"; // Fixed across all machines
+                
                 // Update with remote data
-                if (remoteData.secretKey) data.secretKey = remoteData.secretKey;
-                if (remoteData.challenge) data.challenge = remoteData.challenge;
                 if (remoteData.passwordHash) data.passwordHash = remoteData.passwordHash;
                 if (remoteData.twoFactorEnabled !== undefined) data.twoFactorEnabled = remoteData.twoFactorEnabled;
                 if (remoteData.twoFactorSecret) data.twoFactorSecret = remoteData.twoFactorSecret;
@@ -141,7 +143,23 @@ class RemoteStore {
                 localStorage.setItem(globalAdminKey, JSON.stringify(data));
                 sessionStorage.setItem(globalAdminKey, JSON.stringify(data));
                 
-                console.log('Synced remote data to global admin account');
+                console.log('Synced remote data to global admin account with fixed secret key and challenge');
+            } else {
+                // Create new global admin account with fixed values
+                const newGlobalAdmin = {
+                    secretKey: btoa("admin_access_2024_global_fixed"), // Fixed across all machines
+                    challenge: "fixed_challenge_2024", // Fixed across all machines
+                    passwordHash: remoteData.passwordHash || null,
+                    twoFactorEnabled: remoteData.twoFactorEnabled || false,
+                    twoFactorSecret: remoteData.twoFactorSecret || null,
+                    lastUpdated: Date.now(),
+                    lastRemoteSync: Date.now()
+                };
+                
+                localStorage.setItem(globalAdminKey, JSON.stringify(newGlobalAdmin));
+                sessionStorage.setItem(globalAdminKey, JSON.stringify(newGlobalAdmin));
+                
+                console.log('Created new global admin account with fixed secret key and challenge');
             }
         } catch (error) {
             console.error('Failed to sync remote data to global admin account:', error);

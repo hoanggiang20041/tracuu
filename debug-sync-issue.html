@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Sync Issue - 2FA & Password</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .debug-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+        .debug-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+        }
+        .debug-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-success { background: #28a745; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-danger { background: #dc3545; }
+        .btn-info { background: #17a2b8; }
+        .result {
+            margin-top: 10px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-ok { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .status-warning { background: #ffc107; }
+        
+        .data-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 15px 0;
+        }
+        .data-box {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            background: #f9f9f9;
+        }
+        .data-box h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1><i class="fas fa-bug"></i> Debug Sync Issue - 2FA & Password</h1>
+        
+        <div class="debug-section">
+            <h3><i class="fas fa-info-circle"></i> System Status Check</h3>
+            <button class="btn btn-info" onclick="checkSystemStatus()">Check System Status</button>
+            <div id="system-status" class="result"></div>
+        </div>
+
+        <div class="debug-section">
+            <h3><i class="fas fa-database"></i> Data Comparison</h3>
+            <button class="btn" onclick="compareData()">Compare Local vs Remote Data</button>
+            <button class="btn btn-warning" onclick="checkDataConsistency()">Check Data Consistency</button>
+            <div id="data-comparison" class="result"></div>
+        </div>
+
+        <div class="debug-section">
+            <h3><i class="fas fa-sync-alt"></i> Sync Operations</h3>
+            <button class="btn btn-success" onclick="forceSyncAll()">Force Sync All</button>
+            <button class="btn btn-warning" onclick="fixSyncIssues()">Fix Sync Issues</button>
+            <button class="btn btn-info" onclick="testSyncFlow()">Test Sync Flow</button>
+            <div id="sync-result" class="result"></div>
+        </div>
+
+        <div class="debug-section">
+            <h3><i class="fas fa-key"></i> 2FA & Password Test</h3>
+            <button class="btn" onclick="test2FASync()">Test 2FA Sync</button>
+            <button class="btn" onclick="testPasswordSync()">Test Password Sync</button>
+            <button class="btn btn-danger" onclick="resetAllData()">Reset All Data</button>
+            <div id="auth-result" class="result"></div>
+        </div>
+
+        <div class="debug-section">
+            <h3><i class="fas fa-tools"></i> Manual Fix Tools</h3>
+            <button class="btn btn-warning" onclick="manualSync2FA()">Manual Sync 2FA</button>
+            <button class="btn btn-warning" onclick="manualSyncPassword()">Manual Sync Password</button>
+            <button class="btn btn-info" onclick="exportData()">Export All Data</button>
+            <button class="btn btn-info" onclick="importData()">Import Data</button>
+            <div id="manual-result" class="result"></div>
+        </div>
+
+        <div class="debug-section">
+            <h3><i class="fas fa-chart-line"></i> Performance & Logs</h3>
+            <button class="btn" onclick="showSyncLogs()">Show Sync Logs</button>
+            <button class="btn" onclick="testPerformance()">Test Performance</button>
+            <button class="btn btn-danger" onclick="clearLogs()">Clear Logs</button>
+            <div id="logs-result" class="result"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="assets/totp-auth.js"></script>
+    <script src="assets/remote-store.js"></script>
+    <script src="assets/auth.js"></script>
+    <script src="assets/security.js"></script>
+    <script src="assets/sync-manager.js"></script>
+
+    <script>
+        // Debug functions
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+        }
+
+        function checkSystemStatus() {
+            try {
+                const status = {
+                    // System availability
+                    remoteStore: !!window.remoteStore,
+                    hiddenAuth: !!window.hiddenAuth,
+                    adminSecurity: !!window.adminSecurity,
+                    syncManager: !!window.syncManager,
+                    totpAuth: !!window.TOTPAuth,
+                    
+                    // Configuration
+                    remoteConfigured: window.remoteStore ? window.remoteStore.isConfigured() : false,
+                    
+                    // Data availability
+                    globalAdminAccount: !!localStorage.getItem('global_admin_account'),
+                    global2FA: !!localStorage.getItem('global_admin_2fa'),
+                    syncStatus: !!localStorage.getItem('sync_status'),
+                    
+                    // Network
+                    isOnline: navigator.onLine,
+                    
+                    // Last sync
+                    lastSync: localStorage.getItem('last_sync_timestamp'),
+                    syncErrors: JSON.parse(localStorage.getItem('sync_errors') || '[]').length
+                };
+
+                let result = 'System Status Check:\n\n';
+                for (const [key, value] of Object.entries(status)) {
+                    const statusClass = value ? 'status-ok' : 'status-error';
+                    const statusText = value ? 'OK' : 'ERROR';
+                    result += `<span class="status-indicator ${statusClass}"></span>${key}: ${statusText}\n`;
+                }
+
+                // Additional checks
+                result += '\nDetailed Checks:\n';
+                
+                // Check remote store configuration
+                if (window.remoteStore) {
+                    result += `- Remote Store Base URL: ${window.remoteStore.baseUrl}\n`;
+                    result += `- Remote Store Configured: ${window.remoteStore.isConfigured()}\n`;
+                }
+                
+                // Check sync manager
+                if (window.syncManager) {
+                    const syncStatus = window.syncManager.getSyncStatus();
+                    result += `- Sync Manager Status: ${JSON.stringify(syncStatus, null, 2)}\n`;
+                }
+
+                document.getElementById('system-status').innerHTML = result;
+            } catch (error) {
+                showResult('system-status', `System status check error: ${error.message}`, 'error');
+            }
+        }
+
+        async function compareData() {
+            try {
+                let result = 'Data Comparison:\n\n';
+                
+                // Get local data
+                const localAdminAccount = JSON.parse(localStorage.getItem('global_admin_account') || '{}');
+                const local2FA = JSON.parse(localStorage.getItem('global_admin_2fa') || '{}');
+                
+                result += 'LOCAL DATA:\n';
+                result += `- Admin Account: ${JSON.stringify(localAdminAccount, null, 2)}\n`;
+                result += `- 2FA Status: ${JSON.stringify(local2FA, null, 2)}\n\n`;
+                
+                // Get remote data
+                let remoteData = null;
+                if (window.remoteStore && window.remoteStore.isConfigured()) {
+                    try {
+                        remoteData = await window.remoteStore.getAdminState();
+                        result += 'REMOTE DATA:\n';
+                        result += `- Remote Data: ${JSON.stringify(remoteData, null, 2)}\n\n`;
+                    } catch (error) {
+                        result += `REMOTE DATA ERROR: ${error.message}\n\n`;
+                    }
+                } else {
+                    result += 'REMOTE DATA: Not configured or available\n\n';
+                }
+                
+                // Compare data
+                result += 'COMPARISON:\n';
+                if (remoteData) {
+                    const issues = [];
+                    
+                    // Compare secret key
+                    if (localAdminAccount.secretKey !== remoteData.secretKey) {
+                        issues.push('Secret key mismatch');
+                    }
+                    
+                    // Compare challenge
+                    if (localAdminAccount.challenge !== remoteData.challenge) {
+                        issues.push('Challenge mismatch');
+                    }
+                    
+                    // Compare password hash
+                    if (localAdminAccount.passwordHash !== remoteData.passwordHash) {
+                        issues.push('Password hash mismatch');
+                    }
+                    
+                    // Compare 2FA status
+                    if (local2FA.enabled !== remoteData.twoFactorEnabled) {
+                        issues.push('2FA enabled status mismatch');
+                    }
+                    
+                    // Compare 2FA secret
+                    if (local2FA.secret !== remoteData.twoFactorSecret) {
+                        issues.push('2FA secret mismatch');
+                    }
+                    
+                    if (issues.length === 0) {
+                        result += '✅ All data is synchronized\n';
+                    } else {
+                        result += '❌ Data synchronization issues:\n';
+                        issues.forEach(issue => result += `  - ${issue}\n`);
+                    }
+                } else {
+                    result += '❌ Cannot compare - no remote data available\n';
+                }
+
+                showResult('data-comparison', result, issues && issues.length > 0 ? 'error' : 'success');
+            } catch (error) {
+                showResult('data-comparison', `Data comparison error: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkDataConsistency() {
+            try {
+                let result = 'Data Consistency Check:\n\n';
+                const issues = [];
+                
+                // Check global admin account
+                const globalAdmin = JSON.parse(localStorage.getItem('global_admin_account') || '{}');
+                if (!globalAdmin.secretKey) {
+                    issues.push('Missing secret key in global admin account');
+                }
+                if (!globalAdmin.challenge) {
+                    issues.push('Missing challenge in global admin account');
+                }
+                if (!globalAdmin.passwordHash) {
+                    issues.push('Missing password hash in global admin account');
+                }
+                
+                // Check global 2FA status
+                const global2FA = JSON.parse(localStorage.getItem('global_admin_2fa') || '{}');
+                if (global2FA.enabled && !global2FA.secret) {
+                    issues.push('2FA enabled but missing secret key');
+                }
+                
+                // Check consistency between systems
+                if (globalAdmin.twoFactorEnabled !== global2FA.enabled) {
+                    issues.push('2FA status inconsistent between admin account and global 2FA');
+                }
+                
+                if (globalAdmin.twoFactorSecret !== global2FA.secret) {
+                    issues.push('2FA secret inconsistent between admin account and global 2FA');
+                }
+                
+                // Check sync manager validation
+                if (window.syncManager) {
+                    const validation = window.syncManager.validateSyncData();
+                    if (!validation.isValid) {
+                        issues.push(...validation.issues);
+                    }
+                }
+                
+                if (issues.length === 0) {
+                    result += '✅ All data is consistent\n';
+                } else {
+                    result += '❌ Data consistency issues:\n';
+                    issues.forEach(issue => result += `  - ${issue}\n`);
+                }
+
+                showResult('data-comparison', result, issues.length > 0 ? 'error' : 'success');
+            } catch (error) {
+                showResult('data-comparison', `Data consistency check error: ${error.message}`, 'error');
+            }
+        }
+
+        async function forceSyncAll() {
+            try {
+                showResult('sync-result', 'Starting force sync all...', 'info');
+                
+                if (!window.syncManager) {
+                    showResult('sync-result', 'Sync Manager not available!', 'error');
+                    return;
+                }
+                
+                const result = await window.syncManager.manualSync();
+                
+                if (result.success) {
+                    showResult('sync-result', `Force sync completed successfully!\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    showResult('sync-result', `Force sync failed:\n${JSON.stringify(result, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult('sync-result', `Force sync error: ${error.message}`, 'error');
+            }
+        }
+
+        async function fixSyncIssues() {
+            try {
+                showResult('sync-result', 'Starting fix sync issues...', 'info');
+                
+                if (!window.syncManager) {
+                    showResult('sync-result', 'Sync Manager not available!', 'error');
+                    return;
+                }
+                
+                const result = await window.syncManager.fixSyncIssues();
+                
+                if (result.success) {
+                    showResult('sync-result', `Sync issues fixed successfully!\n${result.message}`, 'success');
+                } else {
+                    showResult('sync-result', `Failed to fix sync issues:\n${result.message}`, 'error');
+                }
+            } catch (error) {
+                showResult('sync-result', `Fix sync issues error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testSyncFlow() {
+            try {
+                let result = 'Testing Sync Flow:\n\n';
+                
+                // Test 1: Check remote store
+                result += '1. Testing Remote Store...\n';
+                if (window.remoteStore && window.remoteStore.isConfigured()) {
+                    const remoteData = await window.remoteStore.getAdminState();
+                    result += `   ✅ Remote store working, data: ${remoteData ? 'Available' : 'Empty'}\n`;
+                } else {
+                    result += `   ❌ Remote store not configured\n`;
+                }
+                
+                // Test 2: Check auth system
+                result += '2. Testing Auth System...\n';
+                if (window.hiddenAuth) {
+                    const globalAdmin = window.hiddenAuth.getGlobalAdminData();
+                    result += `   ✅ Auth system working, admin data: ${globalAdmin ? 'Available' : 'Empty'}\n`;
+                } else {
+                    result += `   ❌ Auth system not available\n`;
+                }
+                
+                // Test 3: Check security system
+                result += '3. Testing Security System...\n';
+                if (window.adminSecurity) {
+                    const global2FA = window.adminSecurity.getGlobal2FAStatus();
+                    result += `   ✅ Security system working, 2FA data: ${global2FA ? 'Available' : 'Empty'}\n`;
+                } else {
+                    result += `   ❌ Security system not available\n`;
+                }
+                
+                // Test 4: Test sync manager
+                result += '4. Testing Sync Manager...\n';
+                if (window.syncManager) {
+                    const syncStatus = window.syncManager.getSyncStatus();
+                    result += `   ✅ Sync manager working, status: ${JSON.stringify(syncStatus, null, 2)}\n`;
+                } else {
+                    result += `   ❌ Sync manager not available\n`;
+                }
+
+                showResult('sync-result', result, 'info');
+            } catch (error) {
+                showResult('sync-result', `Sync flow test error: ${error.message}`, 'error');
+            }
+        }
+
+        async function test2FASync() {
+            try {
+                let result = 'Testing 2FA Sync:\n\n';
+                
+                // Get current 2FA data
+                const global2FA = JSON.parse(localStorage.getItem('global_admin_2fa') || '{}');
+                const globalAdmin = JSON.parse(localStorage.getItem('global_admin_account') || '{}');
+                
+                result += `Current 2FA Data:\n`;
+                result += `- Global 2FA: ${JSON.stringify(global2FA, null, 2)}\n`;
+                result += `- Admin Account 2FA: ${JSON.stringify({
+                    twoFactorEnabled: globalAdmin.twoFactorEnabled,
+                    twoFactorSecret: globalAdmin.twoFactorSecret
+                }, null, 2)}\n\n`;
+                
+                // Test sync
+                if (window.adminSecurity) {
+                    result += `Testing 2FA sync...\n`;
+                    await window.adminSecurity.forceSync2FAFromRemote();
+                    result += `✅ 2FA sync completed\n`;
+                } else {
+                    result += `❌ Admin Security not available\n`;
+                }
+
+                showResult('auth-result', result, 'info');
+            } catch (error) {
+                showResult('auth-result', `2FA sync test error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testPasswordSync() {
+            try {
+                let result = 'Testing Password Sync:\n\n';
+                
+                // Get current password data
+                const globalAdmin = JSON.parse(localStorage.getItem('global_admin_account') || '{}');
+                
+                result += `Current Password Data:\n`;
+                result += `- Secret Key: ${globalAdmin.secretKey ? 'Present' : 'Missing'}\n`;
+                result += `- Challenge: ${globalAdmin.challenge ? 'Present' : 'Missing'}\n`;
+                result += `- Password Hash: ${globalAdmin.passwordHash ? 'Present' : 'Missing'}\n\n`;
+                
+                // Test sync
+                if (window.hiddenAuth) {
+                    result += `Testing password sync...\n`;
+                    await window.hiddenAuth.forceSyncFromRemote();
+                    result += `✅ Password sync completed\n`;
+                } else {
+                    result += `❌ Hidden Auth not available\n`;
+                }
+
+                showResult('auth-result', result, 'info');
+            } catch (error) {
+                showResult('auth-result', `Password sync test error: ${error.message}`, 'error');
+            }
+        }
+
+        function resetAllData() {
+            try {
+                if (!confirm('Are you sure you want to reset ALL data? This cannot be undone!')) {
+                    return;
+                }
+                
+                // Clear all sync-related data
+                localStorage.removeItem('global_admin_account');
+                localStorage.removeItem('global_admin_2fa');
+                localStorage.removeItem('sync_status');
+                localStorage.removeItem('sync_errors');
+                localStorage.removeItem('remote_admin_cache');
+                localStorage.removeItem('admin_security_data');
+                
+                sessionStorage.removeItem('global_admin_account');
+                sessionStorage.removeItem('global_admin_2fa');
+                sessionStorage.removeItem('admin_security_data');
+                
+                showResult('auth-result', 'All data reset successfully! Please refresh the page.', 'warning');
+            } catch (error) {
+                showResult('auth-result', `Reset error: ${error.message}`, 'error');
+            }
+        }
+
+        async function manualSync2FA() {
+            try {
+                showResult('manual-result', 'Manual 2FA sync started...', 'info');
+                
+                // Get current 2FA data
+                const global2FA = JSON.parse(localStorage.getItem('global_admin_2fa') || '{}');
+                const globalAdmin = JSON.parse(localStorage.getItem('global_admin_account') || '{}');
+                
+                // Sync 2FA data between systems
+                if (global2FA.enabled !== undefined) {
+                    globalAdmin.twoFactorEnabled = global2FA.enabled;
+                }
+                if (global2FA.secret) {
+                    globalAdmin.twoFactorSecret = global2FA.secret;
+                }
+                
+                // Save updated data
+                localStorage.setItem('global_admin_account', JSON.stringify(globalAdmin));
+                sessionStorage.setItem('global_admin_account', JSON.stringify(globalAdmin));
+                
+                // Sync to remote
+                if (window.remoteStore && window.remoteStore.isConfigured()) {
+                    await window.remoteStore.setAdminState(globalAdmin);
+                }
+                
+                showResult('manual-result', 'Manual 2FA sync completed successfully!', 'success');
+            } catch (error) {
+                showResult('manual-result', `Manual 2FA sync error: ${error.message}`, 'error');
+            }
+        }
+
+        async function manualSyncPassword() {
+            try {
+                showResult('manual-result', 'Manual password sync started...', 'info');
+                
+                // Get current password data
+                const globalAdmin = JSON.parse(localStorage.getItem('global_admin_account') || '{}');
+                
+                // Ensure we have secret key and challenge
+                if (!globalAdmin.secretKey) {
+                    globalAdmin.secretKey = btoa("admin_access_2024_global_fixed");
+                }
+                if (!globalAdmin.challenge) {
+                    globalAdmin.challenge = "fixed_challenge_2024";
+                }
+                
+                // Save updated data
+                localStorage.setItem('global_admin_account', JSON.stringify(globalAdmin));
+                sessionStorage.setItem('global_admin_account', JSON.stringify(globalAdmin));
+                
+                // Sync to remote
+                if (window.remoteStore && window.remoteStore.isConfigured()) {
+                    await window.remoteStore.setAdminState(globalAdmin);
+                }
+                
+                showResult('manual-result', 'Manual password sync completed successfully!', 'success');
+            } catch (error) {
+                showResult('manual-result', `Manual password sync error: ${error.message}`, 'error');
+            }
+        }
+
+        function exportData() {
+            try {
+                const data = {
+                    globalAdminAccount: localStorage.getItem('global_admin_account'),
+                    global2FA: localStorage.getItem('global_admin_2fa'),
+                    syncStatus: localStorage.getItem('sync_status'),
+                    syncErrors: localStorage.getItem('sync_errors'),
+                    remoteCache: localStorage.getItem('remote_admin_cache'),
+                    timestamp: Date.now()
+                };
+                
+                const dataStr = JSON.stringify(data, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `sync-data-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                
+                URL.revokeObjectURL(url);
+                
+                showResult('manual-result', 'Data exported successfully!', 'success');
+            } catch (error) {
+                showResult('manual-result', `Export error: ${error.message}`, 'error');
+            }
+        }
+
+        function importData() {
+            try {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            try {
+                                const data = JSON.parse(e.target.result);
+                                
+                                // Import data
+                                if (data.globalAdminAccount) {
+                                    localStorage.setItem('global_admin_account', data.globalAdminAccount);
+                                    sessionStorage.setItem('global_admin_account', data.globalAdminAccount);
+                                }
+                                if (data.global2FA) {
+                                    localStorage.setItem('global_admin_2fa', data.global2FA);
+                                    sessionStorage.setItem('global_admin_2fa', data.global2FA);
+                                }
+                                if (data.syncStatus) {
+                                    localStorage.setItem('sync_status', data.syncStatus);
+                                }
+                                if (data.syncErrors) {
+                                    localStorage.setItem('sync_errors', data.syncErrors);
+                                }
+                                if (data.remoteCache) {
+                                    localStorage.setItem('remote_admin_cache', data.remoteCache);
+                                }
+                                
+                                showResult('manual-result', 'Data imported successfully! Please refresh the page.', 'success');
+                            } catch (error) {
+                                showResult('manual-result', `Import error: ${error.message}`, 'error');
+                            }
+                        };
+                        reader.readAsText(file);
+                    }
+                };
+                input.click();
+            } catch (error) {
+                showResult('manual-result', `Import error: ${error.message}`, 'error');
+            }
+        }
+
+        function showSyncLogs() {
+            try {
+                const logs = {
+                    syncStatus: JSON.parse(localStorage.getItem('sync_status') || '{}'),
+                    syncErrors: JSON.parse(localStorage.getItem('sync_errors') || '[]'),
+                    lastSync: localStorage.getItem('last_sync_timestamp'),
+                    remoteCache: JSON.parse(localStorage.getItem('remote_admin_cache') || '{}')
+                };
+                
+                let result = 'Sync Logs:\n\n';
+                result += `Sync Status: ${JSON.stringify(logs.syncStatus, null, 2)}\n\n`;
+                result += `Sync Errors (${logs.syncErrors.length}):\n`;
+                logs.syncErrors.forEach((error, index) => {
+                    result += `${index + 1}. ${JSON.stringify(error, null, 2)}\n`;
+                });
+                result += `\nLast Sync: ${logs.lastSync}\n`;
+                result += `Remote Cache: ${JSON.stringify(logs.remoteCache, null, 2)}\n`;
+
+                showResult('logs-result', result, 'info');
+            } catch (error) {
+                showResult('logs-result', `Show logs error: ${error.message}`, 'error');
+            }
+        }
+
+        function testPerformance() {
+            try {
+                const startTime = performance.now();
+                
+                // Test multiple operations
+                const operations = [];
+                for (let i = 0; i < 100; i++) {
+                    operations.push({
+                        test: i,
+                        timestamp: Date.now()
+                    });
+                }
+                
+                const endTime = performance.now();
+                const duration = endTime - startTime;
+                
+                showResult('logs-result', `Performance Test:\n100 operations completed in ${duration.toFixed(2)}ms\nAverage: ${(duration/100).toFixed(2)}ms per operation`, 'success');
+            } catch (error) {
+                showResult('logs-result', `Performance test error: ${error.message}`, 'error');
+            }
+        }
+
+        function clearLogs() {
+            try {
+                localStorage.removeItem('sync_errors');
+                localStorage.removeItem('sync_status');
+                localStorage.removeItem('last_sync_timestamp');
+                
+                showResult('logs-result', 'Logs cleared successfully!', 'success');
+            } catch (error) {
+                showResult('logs-result', `Clear logs error: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSystemStatus();
+        });
+    </script>
+</body>
+</html>
