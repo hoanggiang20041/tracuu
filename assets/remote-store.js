@@ -71,6 +71,12 @@ class RemoteStore {
     }
 
     isConfigured() {
+        // Allow forcing offline mode via localStorage flag
+        try {
+            if (localStorage.getItem('remote_offline') === 'true') {
+                return false;
+            }
+        } catch(_) {}
         // If using server-side proxy (relative /api endpoint), consider configured
         if (typeof this.baseUrl === 'string' && this.baseUrl.indexOf('/api/') === 0) {
             return true;
@@ -78,6 +84,10 @@ class RemoteStore {
         // Fallback to legacy client-side config
         return !!(this.config && this.config.masterKey && this.config.binId);
     }
+
+    // Helpers to toggle offline mode at runtime
+    goOffline() { try { localStorage.setItem('remote_offline', 'true'); } catch(_) {} }
+    goOnline() { try { localStorage.removeItem('remote_offline'); } catch(_) {} }
 
     async getAdminState() {
         if (!this.isConfigured()) {
