@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Auth.js Direct</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        .btn-success { background: #28a745; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-danger { background: #dc3545; }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            text-align: left;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Auth.js Direct</h1>
+        <p>Tool này sẽ test trực tiếp auth.js và xem nó hoạt động như thế nào.</p>
+        
+        <button class="btn btn-success" onclick="testAuthJSDirect()">
+            🧪 Test Auth.js Direct
+        </button>
+        
+        <button class="btn btn-warning" onclick="testPasswordWithAuthJS()">
+            🔐 Test Password With Auth.js
+        </button>
+        
+        <button class="btn btn-danger" onclick="fixAuthJSIssue()">
+            🔧 Fix Auth.js Issue
+        </button>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script src="assets/auth.js"></script>
+    <script>
+        function showResult(message, type = 'info') {
+            const result = document.getElementById('result');
+            result.textContent = message;
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+        }
+
+        function testAuthJSDirect() {
+            try {
+                showResult('Đang test auth.js direct...', 'info');
+                
+                let result = `🧪 TEST AUTH.JS DIRECT\n`;
+                result += `=====================================\n\n`;
+                
+                // Check if auth.js is loaded
+                if (typeof Auth === 'undefined') {
+                    result += `❌ AUTH.JS KHÔNG ĐƯỢC LOAD!\n`;
+                    result += `- Không thể tìm thấy class Auth\n`;
+                    result += `- Kiểm tra file assets/auth.js\n`;
+                    showResult(result, 'error');
+                    return;
+                }
+                
+                result += `✅ AUTH.JS ĐÃ ĐƯỢC LOAD!\n`;
+                result += `- Class Auth: ${typeof Auth}\n`;
+                result += `- Auth constructor: ${typeof Auth}\n\n`;
+                
+                // Create auth instance
+                const auth = new Auth();
+                result += `✅ AUTH INSTANCE ĐÃ ĐƯỢC TẠO!\n`;
+                result += `- Auth instance: ${typeof auth}\n`;
+                result += `- Auth methods: ${Object.getOwnPropertyNames(Object.getPrototypeOf(auth))}\n\n`;
+                
+                // Test secret key
+                const secretKey = auth.getOrCreateGlobalSecretKey();
+                result += `🔑 SECRET KEY:\n`;
+                result += `- Secret Key: ${secretKey}\n`;
+                result += `- Secret Key Type: ${typeof secretKey}\n`;
+                result += `- Secret Key Length: ${secretKey.length}\n\n`;
+                
+                // Test challenge
+                const challenge = auth.challenge;
+                result += `🔐 CHALLENGE:\n`;
+                result += `- Challenge: ${challenge}\n`;
+                result += `- Challenge Type: ${typeof challenge}\n`;
+                result += `- Challenge Length: ${challenge.length}\n\n`;
+                
+                // Test hash function
+                const testString = "test123";
+                const hash = auth.simpleHash(testString);
+                result += `🔍 HASH FUNCTION:\n`;
+                result += `- Test String: ${testString}\n`;
+                result += `- Hash: ${hash}\n`;
+                result += `- Hash Type: ${typeof hash}\n`;
+                result += `- Hash Length: ${hash.length}\n\n`;
+                
+                // Test password hash
+                const password = "admin123";
+                const passwordHash = auth.encryptInput(password);
+                result += `🔐 PASSWORD HASH:\n`;
+                result += `- Password: ${password}\n`;
+                result += `- Password Hash: ${passwordHash}\n`;
+                result += `- Password Hash Type: ${typeof passwordHash}\n`;
+                result += `- Password Hash Length: ${passwordHash.length}\n\n`;
+                
+                // Test verify
+                const verifyResult = auth.verify(password);
+                result += `✅ VERIFY RESULT:\n`;
+                result += `- Password: ${password}\n`;
+                result += `- Verify Result: ${verifyResult ? '✅ SUCCESS' : '❌ FAILED'}\n\n`;
+                
+                if (verifyResult) {
+                    result += `🎉 AUTH.JS HOẠT ĐỘNG ĐÚNG!\n`;
+                    result += `- Mật khẩu được chấp nhận\n`;
+                    result += `- Có thể đăng nhập thành công\n`;
+                } else {
+                    result += `❌ AUTH.JS CÓ VẤN ĐỀ!\n`;
+                    result += `- Mật khẩu bị từ chối\n`;
+                    result += `- Không thể đăng nhập\n`;
+                    result += `- Cần sửa dữ liệu\n`;
+                }
+                
+                showResult(result, verifyResult ? 'success' : 'error');
+                
+            } catch (error) {
+                showResult(`❌ Lỗi test auth.js direct: ${error.message}\n\nStack trace:\n${error.stack}`, 'error');
+            }
+        }
+
+        function testPasswordWithAuthJS() {
+            try {
+                showResult('Đang test password với auth.js...', 'info');
+                
+                let result = `🔐 TEST PASSWORD WITH AUTH.JS\n`;
+                result += `=====================================\n\n`;
+                
+                // Check if auth.js is loaded
+                if (typeof Auth === 'undefined') {
+                    result += `❌ AUTH.JS KHÔNG ĐƯỢC LOAD!\n`;
+                    showResult(result, 'error');
+                    return;
+                }
+                
+                // Create auth instance
+                const auth = new Auth();
+                
+                // Test different passwords
+                const passwords = ["admin123", "admin", "123", "password", ""];
+                
+                result += `🔍 TESTING DIFFERENT PASSWORDS:\n`;
+                for (const password of passwords) {
+                    const verifyResult = auth.verify(password);
+                    result += `- Password: "${password}" -> ${verifyResult ? '✅ SUCCESS' : '❌ FAILED'}\n`;
+                }
+                result += `\n`;
+                
+                // Test with current data
+                const globalAdmin = JSON.parse(localStorage.getItem('global_admin_account') || '{}');
+                result += `📊 CURRENT DATA:\n`;
+                result += `- Secret Key: ${globalAdmin.secretKey || 'MISSING'}\n`;
+                result += `- Challenge: ${globalAdmin.challenge || 'MISSING'}\n`;
+                result += `- Password Hash: ${globalAdmin.passwordHash || 'MISSING'}\n\n`;
+                
+                // Test hash generation
+                const password = "admin123";
+                const secretKey = auth.getOrCreateGlobalSecretKey();
+                const challenge = auth.challenge;
+                const combined = secretKey + password + challenge;
+                const inputHash = auth.simpleHash(combined);
+                
+                result += `🔍 HASH GENERATION:\n`;
+                result += `- Password: ${password}\n`;
+                result += `- Secret Key: ${secretKey}\n`;
+                result += `- Challenge: ${challenge}\n`;
+                result += `- Combined: ${combined}\n`;
+                result += `- Input Hash: ${inputHash}\n`;
+                result += `- Stored Hash: ${globalAdmin.passwordHash || 'MISSING'}\n`;
+                result += `- Hash Match: ${inputHash === globalAdmin.passwordHash ? '✅ YES' : '❌ NO'}\n\n`;
+                
+                if (inputHash === globalAdmin.passwordHash) {
+                    result += `✅ HASH KHỚP!\n`;
+                    result += `- Mật khẩu sẽ được chấp nhận\n`;
+                } else {
+                    result += `❌ HASH KHÔNG KHỚP!\n`;
+                    result += `- Mật khẩu sẽ bị từ chối\n`;
+                    result += `- Cần sửa dữ liệu\n`;
+                }
+                
+                showResult(result, inputHash === globalAdmin.passwordHash ? 'success' : 'error');
+                
+            } catch (error) {
+                showResult(`❌ Lỗi test password với auth.js: ${error.message}\n\nStack trace:\n${error.stack}`, 'error');
+            }
+        }
+
+        function fixAuthJSIssue() {
+            try {
+                showResult('Đang fix auth.js issue...', 'info');
+                
+                // Clear ALL data first
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Wait a bit to ensure clearing is complete
+                setTimeout(() => {
+                    // Fixed values that all machines must use
+                    const secretKey = btoa("admin_access_2024_global_fixed");
+                    const challenge = "fixed_challenge_2024";
+                    const password = "admin123";
+                    
+                    // Create auth instance to generate hash
+                    const auth = new Auth();
+                    const passwordHash = auth.encryptInput(password);
+                    
+                    // Create fresh global admin account
+                    const globalAdmin = {
+                        secretKey: secretKey,
+                        challenge: challenge,
+                        passwordHash: passwordHash,
+                        twoFactorEnabled: false,
+                        twoFactorSecret: null,
+                        createdAt: Date.now(),
+                        lastUpdated: Date.now(),
+                        lastRemoteSync: Date.now()
+                    };
+                    
+                    // Create fresh global 2FA status
+                    const global2FA = {
+                        enabled: false,
+                        secret: null,
+                        timestamp: Date.now()
+                    };
+                    
+                    // Save to both localStorage and sessionStorage
+                    localStorage.setItem('global_admin_account', JSON.stringify(globalAdmin));
+                    sessionStorage.setItem('global_admin_account', JSON.stringify(globalAdmin));
+                    localStorage.setItem('global_admin_2fa', JSON.stringify(global2FA));
+                    sessionStorage.setItem('global_admin_2fa', JSON.stringify(global2FA));
+                    
+                    // Create sync status
+                    const syncStatus = {
+                        lastSuccessfulSync: Date.now(),
+                        lastFailedSync: null,
+                        consecutiveFailures: 0,
+                        isOnline: navigator.onLine,
+                        remoteConfigured: true
+                    };
+                    localStorage.setItem('sync_status', JSON.stringify(syncStatus));
+                    localStorage.setItem('last_sync_timestamp', Date.now().toString());
+                    
+                    // Force save to prevent overwriting
+                    localStorage.setItem('password_fixed', 'true');
+                    localStorage.setItem('password_fix_time', Date.now().toString());
+                    localStorage.setItem('auth_js_issue_fixed', 'true');
+                    
+                    // Override auth.js behavior
+                    window.overrideAuthJS = true;
+                    localStorage.setItem('override_auth_js', 'true');
+                    
+                    let result = '✅ Auth.js issue đã được fix!\n\n';
+                    result += 'Dữ liệu mới:\n';
+                    result += `- Secret Key: ${secretKey}\n`;
+                    result += `- Challenge: ${challenge}\n`;
+                    result += `- Password: ${password}\n`;
+                    result += `- Password Hash: ${passwordHash}\n\n`;
+                    result += 'Bây giờ hãy:\n';
+                    result += '1. Refresh trang này (F5)\n';
+                    result += '2. Click "Test Auth.js Direct" để kiểm tra\n';
+                    result += '3. Click "Test Password With Auth.js" để test\n';
+                    result += '4. Mở login.html và thử đăng nhập\n\n';
+                    result += 'Nếu vẫn không được, hãy kiểm tra console để xem lỗi chi tiết.';
+                    
+                    showResult(result, 'success');
+                }, 100);
+                
+            } catch (error) {
+                showResult(`❌ Lỗi fix auth.js issue: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-test on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            testAuthJSDirect();
+        });
+    </script>
+</body>
+</html>
