@@ -94,20 +94,21 @@
                 result += `=====================================\n\n`;
                 
                 // Check if auth.js is loaded
-                if (typeof Auth === 'undefined') {
+                if (typeof HiddenAuth === 'undefined') {
                     result += `❌ AUTH.JS KHÔNG ĐƯỢC LOAD!\n`;
-                    result += `- Không thể tìm thấy class Auth\n`;
+                    result += `- Không thể tìm thấy class HiddenAuth\n`;
                     result += `- Kiểm tra file assets/auth.js\n`;
                     showResult(result, 'error');
                     return;
                 }
                 
                 result += `✅ AUTH.JS ĐÃ ĐƯỢC LOAD!\n`;
-                result += `- Class Auth: ${typeof Auth}\n`;
-                result += `- Auth constructor: ${typeof Auth}\n\n`;
+                result += `- Class HiddenAuth: ${typeof HiddenAuth}\n`;
+                result += `- HiddenAuth constructor: ${typeof HiddenAuth}\n`;
+                result += `- Global instance: ${typeof window.hiddenAuth}\n\n`;
                 
-                // Create auth instance
-                const auth = new Auth();
+                // Use global instance or create new one
+                const auth = window.hiddenAuth || new HiddenAuth();
                 result += `✅ AUTH INSTANCE ĐÃ ĐƯỢC TẠO!\n`;
                 result += `- Auth instance: ${typeof auth}\n`;
                 result += `- Auth methods: ${Object.getOwnPropertyNames(Object.getPrototypeOf(auth))}\n\n`;
@@ -176,14 +177,14 @@
                 result += `=====================================\n\n`;
                 
                 // Check if auth.js is loaded
-                if (typeof Auth === 'undefined') {
+                if (typeof HiddenAuth === 'undefined') {
                     result += `❌ AUTH.JS KHÔNG ĐƯỢC LOAD!\n`;
                     showResult(result, 'error');
                     return;
                 }
                 
-                // Create auth instance
-                const auth = new Auth();
+                // Use global instance or create new one
+                const auth = window.hiddenAuth || new HiddenAuth();
                 
                 // Test different passwords
                 const passwords = ["admin123", "admin", "123", "password", ""];
@@ -250,7 +251,7 @@
                     const password = "admin123";
                     
                     // Create auth instance to generate hash
-                    const auth = new Auth();
+                    const auth = window.hiddenAuth || new HiddenAuth();
                     const passwordHash = auth.encryptInput(password);
                     
                     // Create fresh global admin account
