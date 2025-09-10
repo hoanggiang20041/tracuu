@@ -6,12 +6,53 @@ class RemoteStore {
         this.configKey = 'jsonbin_config';
         this.adminCacheKey = 'remote_admin_cache';
         this.config = this.loadConfig();
+        this.syncStatusKey = 'sync_status';
         // If no config but default provided via separate file, adopt it once
         if (!this.config && window.JSONBIN_DEFAULT && window.JSONBIN_DEFAULT.binId && window.JSONBIN_DEFAULT.masterKey) {
             this.saveConfig({ binId: window.JSONBIN_DEFAULT.binId, masterKey: window.JSONBIN_DEFAULT.masterKey });
         }
         // Use relative proxy endpoint (server-side) to avoid exposing keys on client
         this.baseUrl = '/api/admin-state';
+    }
+
+    getSyncStatus() {
+        try {
+            const raw = localStorage.getItem(this.syncStatusKey);
+            return raw ? JSON.parse(raw) : { lastSuccessfulSync: null, lastFailedSync: null, consecutiveFailures: 0, isOnline: navigator.onLine, remoteConfigured: true };
+        } catch(_) {
+            return { lastSuccessfulSync: null, lastFailedSync: null, consecutiveFailures: 0, isOnline: navigator.onLine, remoteConfigured: true };
+        }
+    }
+
+    setSyncStatus(status) {
+        try { localStorage.setItem(this.syncStatusKey, JSON.stringify(status)); } catch(_) {}
+    }
+
+    noteSuccess() {
+        const s = this.getSyncStatus();
+        s.lastSuccessfulSync = Date.now();
+        s.consecutiveFailures = 0;
+        s.isOnline = navigator.onLine;
+        s.remoteConfigured = true;
+        delete s.blockUntil;
+        this.setSyncStatus(s);
+    }
+
+    noteFailure() {
+        const s = this.getSyncStatus();
+        s.lastFailedSync = Date.now();
+        s.consecutiveFailures = (s.consecutiveFailures || 0) + 1;
+        s.isOnline = navigator.onLine;
+        // Circuit breaker: back off progressively (1, 2, 5, 10 mins)
+        const backoffs = [60_000, 120_000, 300_000, 600_000];
+        const idx = Math.min(s.consecutiveFailures - 1, backoffs.length - 1);
+        s.blockUntil = Date.now() + backoffs[idx];
+        this.setSyncStatus(s);
+    }
+
+    isBlocked() {
+        const s = this.getSyncStatus();
+        return s.blockUntil && Date.now() < s.blockUntil;
     }
 
     loadConfig() {
@@ -42,6 +83,17 @@ class RemoteStore {
         if (!this.isConfigured()) {
             return null;
         }
+        if (this.isBlocked()) {
+            // During backoff window, prefer cached data
+            try {
+                const cached = localStorage.getItem(this.adminCacheKey);
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    return parsed && parsed.data ? parsed.data : parsed;
+                }
+            } catch(_) {}
+            return null;
+        }
         try {
             const res = await fetch(this.baseUrl, { method: 'GET' });
             if (!res.ok) {
@@ -57,6 +109,7 @@ class RemoteStore {
                     version: record.version || 1
                 };
                 localStorage.setItem(this.adminCacheKey, JSON.stringify(cacheData));
+                this.noteSuccess();
                 
                 // Also sync to global admin account if it contains auth data
                 if (record.secretKey || record.passwordHash || record.twoFactorEnabled !== undefined) {
@@ -66,6 +119,7 @@ class RemoteStore {
             return record || null;
         } catch (e) {
             console.warn('RemoteStore.getAdminState fallback to cache', e);
+            this.noteFailure();
             try {
                 const cached = localStorage.getItem(this.adminCacheKey);
                 if (cached) {
@@ -85,6 +139,9 @@ class RemoteStore {
     async setAdminState(state) {
         if (!this.isConfigured()) {
             return { ok: false, reason: 'not_configured' };
+        }
+        if (this.isBlocked()) {
+            return { ok: false, reason: 'backoff' };
         }
         try {
             // Add version and timestamp to state
@@ -107,6 +164,7 @@ class RemoteStore {
                 version: stateWithMeta.version
             };
             localStorage.setItem(this.adminCacheKey, JSON.stringify(cacheData));
+            this.noteSuccess();
             
             // Also sync to global admin account if it contains auth data
             if (state.secretKey || state.passwordHash || state.twoFactorEnabled !== undefined) {
@@ -116,6 +174,7 @@ class RemoteStore {
             return { ok: true };
         } catch (e) {
             console.error('RemoteStore.setAdminState error', e);
+            this.noteFailure();
             return { ok: false, error: e.message };
         }
     }
