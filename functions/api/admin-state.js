@@ -1,5 +1,6 @@
 export async function onRequest(context) {
     const { request, env } = context;
+    const url = new URL(request.url);
 
     // CORS preflight
     if (request.method === 'OPTIONS') {
@@ -16,6 +17,31 @@ export async function onRequest(context) {
     // Prefer dedicated admin bin vars, fallback to general ones if missing
     const BIN_ID = env.JSONBIN_ADMIN_ID || env.JSONBIN_ID;
     const MASTER_KEY = env.JSONBIN_ADMIN_KEY || env.JSONBIN_KEY;
+
+    // Diagnostics mode (no secrets leaked)
+    if (url.searchParams.get('diag') === '1') {
+        const hasBinId = !!BIN_ID;
+        const hasKey = !!MASTER_KEY;
+        let remoteOk = null;
+        if (hasBinId && hasKey) {
+            try {
+                const ping = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    method: 'GET',
+                    headers: { 'X-Master-Key': MASTER_KEY, 'X-Bin-Meta': 'false' }
+                });
+                remoteOk = ping.status;
+            } catch (e) {
+                remoteOk = 'network_error';
+            }
+        }
+        return new Response(JSON.stringify({
+            ok: true,
+            hasBinId,
+            hasKey,
+            remoteOk,
+            time: Date.now()
+        }), { status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' } });
+    }
 
     if (!BIN_ID || !MASTER_KEY) {
         // Development fallback: return fixed admin skeleton so client can self-heal
