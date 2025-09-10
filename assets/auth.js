@@ -327,7 +327,15 @@ class HiddenAuth {
                 // Return cached data synchronously if present while async refresh happens outside
                 const cached = localStorage.getItem(window.remoteStore.adminCacheKey);
                 if (cached) {
-                    try { return JSON.parse(cached); } catch(_) {}
+                    try {
+                        const parsed = JSON.parse(cached);
+                        // Unwrap cache format { data, timestamp, version }
+                        const record = parsed && parsed.data ? parsed.data : parsed;
+                        // Only use if it actually contains auth fields
+                        if (record && (record.secretKey || record.passwordHash || record.challenge)) {
+                            return record;
+                        }
+                    } catch(_) { /* ignore and fall back to local */ }
                 }
             }
             let globalAdmin = localStorage.getItem(this.globalAdminKey);
