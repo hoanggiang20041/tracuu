@@ -10,6 +10,20 @@ class HiddenAuth {
     // Tạo hoặc lấy global secret key (CỐ ĐỊNH cho tất cả sessions)
     getOrCreateGlobalSecretKey() {
         try {
+            // Check if password was already fixed
+            const passwordFixed = localStorage.getItem('password_fixed');
+            if (passwordFixed === 'true') {
+                console.log('Password already fixed, using existing data');
+                let globalAdmin = localStorage.getItem(this.globalAdminKey);
+                if (globalAdmin) {
+                    const data = JSON.parse(globalAdmin);
+                    if (data.secretKey) {
+                        console.log('Using existing fixed global secret key');
+                        return data.secretKey;
+                    }
+                }
+            }
+            
             // Try to get existing global secret key
             let globalAdmin = localStorage.getItem(this.globalAdminKey);
             if (globalAdmin) {
@@ -41,6 +55,10 @@ class HiddenAuth {
             
             localStorage.setItem(this.globalAdminKey, JSON.stringify(globalAdminData));
             sessionStorage.setItem(this.globalAdminKey, JSON.stringify(globalAdminData));
+            
+            // Mark password as fixed
+            localStorage.setItem('password_fixed', 'true');
+            localStorage.setItem('password_fix_time', Date.now().toString());
             
             console.log('Created new FIXED global secret key');
             return secretKey;
