@@ -27,9 +27,12 @@ export async function onRequest(context) {
         let remoteOk = null;
         if (hasBinId && hasKey) {
             try {
+                const baseHeaders = { 'X-Master-Key': MASTER_KEY, 'X-Bin-Meta': 'false' };
+                // Fallback: if no access key configured, try mirroring master into X-Access-Key per user setup
+                const headers = hasAccess ? { ...baseHeaders, 'X-Access-Key': ACCESS_KEY } : { ...baseHeaders, 'X-Access-Key': MASTER_KEY };
                 const ping = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
                     method: 'GET',
-                    headers: { 'X-Master-Key': MASTER_KEY, ...(hasAccess?{'X-Access-Key':ACCESS_KEY}:{}) , 'X-Bin-Meta': 'false' }
+                    headers
                 });
                 remoteOk = ping.status;
             } catch (e) {
@@ -65,13 +68,12 @@ export async function onRequest(context) {
 
     try {
         if (request.method === 'GET') {
-            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-                headers: {
-                    'X-Master-Key': MASTER_KEY,
-                    ...(ACCESS_KEY ? { 'X-Access-Key': ACCESS_KEY } : {}),
-                    'X-Bin-Meta': 'false'
-                }
-            });
+            const getHeaders = {
+                'X-Master-Key': MASTER_KEY,
+                'X-Bin-Meta': 'false',
+                ...(ACCESS_KEY ? { 'X-Access-Key': ACCESS_KEY } : { 'X-Access-Key': MASTER_KEY })
+            };
+            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: getHeaders });
             if (!res.ok) {
                 // If unauthorized/forbidden, return dev fallback instead of propagating error
                 if (res.status === 401 || res.status === 403) {
@@ -110,7 +112,7 @@ export async function onRequest(context) {
                 method: 'PUT',
                 headers: {
                     'X-Master-Key': MASTER_KEY,
-                    ...(ACCESS_KEY ? { 'X-Access-Key': ACCESS_KEY } : {}),
+                    ...(ACCESS_KEY ? { 'X-Access-Key': ACCESS_KEY } : { 'X-Access-Key': MASTER_KEY }),
                     'Content-Type': 'application/json'
                 },
                 body

@@ -37,7 +37,8 @@ export async function onRequest(context) {
         }
 
         const headers = { 'X-Master-Key': env.JSONBIN_KEY, 'X-Bin-Meta': 'false' };
-        if (env.JSONBIN_ACCESS_KEY) headers['X-Access-Key'] = env.JSONBIN_ACCESS_KEY;
+        // If no access key supplied by env, mirror master key into X-Access-Key per user setup
+        headers['X-Access-Key'] = env.JSONBIN_ACCESS_KEY || env.JSONBIN_KEY;
         const response = await fetch(`https://api.jsonbin.io/v3/b/${env.JSONBIN_ID}/latest`, { headers });
 
         if (!response.ok) {
@@ -80,7 +81,7 @@ export async function onRequest(context) {
     if (request.method === 'PUT') {
       const body = await request.text();
       const putHeaders = { 'X-Master-Key': env.JSONBIN_KEY, 'Content-Type': 'application/json' };
-      if (env.JSONBIN_ACCESS_KEY) putHeaders['X-Access-Key'] = env.JSONBIN_ACCESS_KEY;
+      putHeaders['X-Access-Key'] = env.JSONBIN_ACCESS_KEY || env.JSONBIN_KEY;
       const response = await fetch(`https://api.jsonbin.io/v3/b/${env.JSONBIN_ID}`, {
         method: 'PUT',
         headers: putHeaders,
