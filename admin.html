@@ -622,6 +622,95 @@
 			}
 		}
 		
+		/* Badge styles for renewal status */
+		.badge {
+			display: inline-block;
+			padding: 4px 8px;
+			font-size: 12px;
+			font-weight: 500;
+			line-height: 1;
+			text-align: center;
+			white-space: nowrap;
+			vertical-align: baseline;
+			border-radius: 4px;
+		}
+		
+		.badge-success {
+			color: #fff;
+			background-color: #28a745;
+		}
+		
+		.badge-danger {
+			color: #fff;
+			background-color: #dc3545;
+		}
+		
+		.badge-warning {
+			color: #212529;
+			background-color: #ffc107;
+		}
+		
+		.badge-info {
+			color: #fff;
+			background-color: #17a2b8;
+		}
+		
+		/* Renewal Tabs Styles */
+		.renewal-tabs {
+			display: flex;
+			gap: 10px;
+			margin-bottom: 20px;
+			border-bottom: 2px solid #e9ecef;
+			padding-bottom: 10px;
+		}
+		
+		.renewal-tab-btn {
+			background: #f8f9fa;
+			border: 2px solid #e9ecef;
+			padding: 12px 20px;
+			border-radius: 8px 8px 0 0;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			font-weight: 500;
+			color: #6c757d;
+		}
+		
+		.renewal-tab-btn:hover {
+			background: #e9ecef;
+			border-color: #dee2e6;
+		}
+		
+		.renewal-tab-btn.active {
+			background: #007bff;
+			border-color: #007bff;
+			color: white;
+		}
+		
+		.renewal-tab-btn.active .badge {
+			background: rgba(255, 255, 255, 0.2);
+			color: white;
+		}
+		
+		.renewal-section {
+			display: block;
+		}
+		
+		.renewal-section.hidden {
+			display: none;
+		}
+		
+		/* Tab badge styles */
+		.renewal-tab-btn .badge {
+			font-size: 11px;
+			padding: 2px 6px;
+			border-radius: 10px;
+			min-width: 20px;
+			text-align: center;
+		}
+		
 	</style>
 </head>
 <body>
@@ -939,16 +1028,83 @@
 		<!-- Tab Content: Yêu cầu gia hạn -->
 		<div id="renewals-tab" class="tab-content">
 			<div class="data-table">
-				<div class="table-header"><h2 class="table-title">Yêu cầu gia hạn</h2>
-					<div class="table-actions"><button class="btn btn-primary" onclick="refreshRenewalsUI()"><i class="fas fa-sync-alt"></i> Làm mới</button></div>
+				<div class="table-header">
+					<h2 class="table-title">Yêu cầu gia hạn</h2>
+					<div class="table-actions">
+						<button class="btn btn-primary" onclick="refreshRenewalsUI()"><i class="fas fa-sync-alt"></i> Làm mới</button>
+					</div>
 				</div>
+				
+				<!-- Renewal Tabs -->
+				<div class="renewal-tabs">
+					<button class="renewal-tab-btn active" onclick="switchRenewalTab('pending')" id="pending-tab-btn">
+						<i class="fas fa-clock"></i> Chưa duyệt <span class="badge badge-warning" id="pending-count">0</span>
+					</button>
+					<button class="renewal-tab-btn" onclick="switchRenewalTab('approved')" id="approved-tab-btn">
+						<i class="fas fa-check-circle"></i> Đã duyệt <span class="badge badge-success" id="approved-count">0</span>
+					</button>
+					<button class="renewal-tab-btn" onclick="switchRenewalTab('rejected')" id="rejected-tab-btn">
+						<i class="fas fa-times-circle"></i> Từ chối <span class="badge badge-danger" id="rejected-count">0</span>
+					</button>
+				</div>
+				
 				<div class="table-content">
-					<table>
-						<thead>
-							<tr><th>ID</th><th>Tên</th><th>Số ngày</th><th>Số tiền</th><th>Nội dung</th><th>Bill</th><th>Trạng thái</th><th>Thao tác</th></tr>
-						</thead>
-						<tbody id="renewals-tbody"></tbody>
-					</table>
+					<!-- Pending Renewals -->
+					<div id="pending-renewals" class="renewal-section">
+						<table>
+							<thead>
+								<tr>
+									<th>ID Khách</th>
+									<th>Tên Khách</th>
+									<th>Số Ngày</th>
+									<th>Số Tiền</th>
+									<th>Nội Dung</th>
+									<th>Hóa Đơn</th>
+									<th>Thời Gian Tạo</th>
+									<th>Thao Tác</th>
+								</tr>
+							</thead>
+							<tbody id="pending-renewals-tbody"></tbody>
+						</table>
+					</div>
+					
+					<!-- Approved Renewals -->
+					<div id="approved-renewals" class="renewal-section" style="display: none;">
+						<table>
+							<thead>
+								<tr>
+									<th>ID Khách</th>
+									<th>Tên Khách</th>
+									<th>Số Ngày</th>
+									<th>Số Tiền</th>
+									<th>Nội Dung</th>
+									<th>Hóa Đơn</th>
+									<th>Thời Gian Duyệt</th>
+									<th>Kết Quả</th>
+								</tr>
+							</thead>
+							<tbody id="approved-renewals-tbody"></tbody>
+						</table>
+					</div>
+					
+					<!-- Rejected Renewals -->
+					<div id="rejected-renewals" class="renewal-section" style="display: none;">
+						<table>
+							<thead>
+								<tr>
+									<th>ID Khách</th>
+									<th>Tên Khách</th>
+									<th>Số Ngày</th>
+									<th>Số Tiền</th>
+									<th>Nội Dung</th>
+									<th>Hóa Đơn</th>
+									<th>Thời Gian Từ Chối</th>
+									<th>Trạng Thái</th>
+								</tr>
+							</thead>
+							<tbody id="rejected-renewals-tbody"></tbody>
+						</table>
+					</div>
 				</div>
 			</div>
 		</div>

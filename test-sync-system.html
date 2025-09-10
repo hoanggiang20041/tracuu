@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Sync System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+        }
+        .test-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-success { background: #28a745; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-danger { background: #dc3545; }
+        .btn-info { background: #17a2b8; }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-ok { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .status-warning { background: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1><i class="fas fa-sync-alt"></i> Test Sync System</h1>
+        
+        <div class="test-section">
+            <h3><i class="fas fa-info-circle"></i> System Status</h3>
+            <div id="system-status">
+                <p><span class="status-indicator status-warning"></span>Checking system status...</p>
+            </div>
+            <button class="btn btn-info" onclick="checkSystemStatus()">Refresh Status</button>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-database"></i> Remote Store Test</h3>
+            <button class="btn" onclick="testRemoteStore()">Test Remote Store</button>
+            <button class="btn btn-success" onclick="testRemoteSync()">Test Remote Sync</button>
+            <div id="remote-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-shield-alt"></i> Auth System Test</h3>
+            <button class="btn" onclick="testAuthSystem()">Test Auth System</button>
+            <button class="btn btn-success" onclick="testAuthSync()">Test Auth Sync</button>
+            <div id="auth-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-key"></i> 2FA System Test</h3>
+            <button class="btn" onclick="test2FASystem()">Test 2FA System</button>
+            <button class="btn btn-success" onclick="test2FASync()">Test 2FA Sync</button>
+            <div id="2fa-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-cogs"></i> Sync Manager Test</h3>
+            <button class="btn" onclick="testSyncManager()">Test Sync Manager</button>
+            <button class="btn btn-success" onclick="testFullSync()">Test Full Sync</button>
+            <button class="btn btn-warning" onclick="testValidation()">Test Validation</button>
+            <button class="btn btn-danger" onclick="testErrorHandling()">Test Error Handling</button>
+            <div id="sync-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-chart-line"></i> Performance Test</h3>
+            <button class="btn" onclick="testPerformance()">Run Performance Test</button>
+            <div id="performance-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-bug"></i> Debug Tools</h3>
+            <button class="btn btn-info" onclick="showDebugInfo()">Show Debug Info</button>
+            <button class="btn btn-warning" onclick="clearAllData()">Clear All Data</button>
+            <button class="btn btn-danger" onclick="resetSyncStatus()">Reset Sync Status</button>
+            <div id="debug-result" class="result"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="assets/totp-auth.js"></script>
+    <script src="assets/remote-store.js"></script>
+    <script src="assets/auth.js"></script>
+    <script src="assets/security.js"></script>
+    <script src="assets/sync-manager.js"></script>
+
+    <script>
+        // Test functions
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+        }
+
+        function checkSystemStatus() {
+            const status = {
+                remoteStore: !!window.remoteStore,
+                hiddenAuth: !!window.hiddenAuth,
+                adminSecurity: !!window.adminSecurity,
+                syncManager: !!window.syncManager,
+                totpAuth: !!window.TOTPAuth
+            };
+
+            let statusHtml = '';
+            for (const [key, value] of Object.entries(status)) {
+                const statusClass = value ? 'status-ok' : 'status-error';
+                const statusText = value ? 'OK' : 'ERROR';
+                statusHtml += `<p><span class="status-indicator ${statusClass}"></span>${key}: ${statusText}</p>`;
+            }
+
+            // Check remote store configuration
+            if (window.remoteStore) {
+                const isConfigured = window.remoteStore.isConfigured();
+                const configStatus = isConfigured ? 'status-ok' : 'status-warning';
+                const configText = isConfigured ? 'Configured' : 'Not Configured';
+                statusHtml += `<p><span class="status-indicator ${configStatus}"></span>Remote Store: ${configText}</p>`;
+            }
+
+            document.getElementById('system-status').innerHTML = statusHtml;
+        }
+
+        async function testRemoteStore() {
+            try {
+                if (!window.remoteStore) {
+                    showResult('remote-result', 'Remote Store not available', 'error');
+                    return;
+                }
+
+                const isConfigured = window.remoteStore.isConfigured();
+                if (!isConfigured) {
+                    showResult('remote-result', 'Remote Store not configured', 'warning');
+                    return;
+                }
+
+                const state = await window.remoteStore.getAdminState();
+                showResult('remote-result', `Remote Store Test:\nConfigured: ${isConfigured}\nData: ${JSON.stringify(state, null, 2)}`, 'success');
+            } catch (error) {
+                showResult('remote-result', `Remote Store Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testRemoteSync() {
+            try {
+                if (!window.remoteStore) {
+                    showResult('remote-result', 'Remote Store not available', 'error');
+                    return;
+                }
+
+                const result = await window.remoteStore.forceSyncFromRemote();
+                showResult('remote-result', `Remote Sync Test:\n${JSON.stringify(result, null, 2)}`, result.success ? 'success' : 'error');
+            } catch (error) {
+                showResult('remote-result', `Remote Sync Error: ${error.message}`, 'error');
+            }
+        }
+
+        function testAuthSystem() {
+            try {
+                if (!window.hiddenAuth) {
+                    showResult('auth-result', 'Auth System not available', 'error');
+                    return;
+                }
+
+                const globalAdmin = window.hiddenAuth.getGlobalAdminData();
+                const global2FA = window.hiddenAuth.getGlobal2FAStatus();
+                
+                showResult('auth-result', `Auth System Test:\nGlobal Admin: ${!!globalAdmin}\nGlobal 2FA: ${!!global2FA}\nSecret Key: ${globalAdmin?.secretKey ? 'Present' : 'Missing'}\nChallenge: ${globalAdmin?.challenge || 'Missing'}`, 'success');
+            } catch (error) {
+                showResult('auth-result', `Auth System Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAuthSync() {
+            try {
+                if (!window.hiddenAuth) {
+                    showResult('auth-result', 'Auth System not available', 'error');
+                    return;
+                }
+
+                const result = await window.hiddenAuth.forceSyncFromRemote();
+                showResult('auth-result', `Auth Sync Test:\n${JSON.stringify(result, null, 2)}`, result.success ? 'success' : 'error');
+            } catch (error) {
+                showResult('auth-result', `Auth Sync Error: ${error.message}`, 'error');
+            }
+        }
+
+        function test2FASystem() {
+            try {
+                if (!window.adminSecurity) {
+                    showResult('2fa-result', 'Security System not available', 'error');
+                    return;
+                }
+
+                const securityData = window.adminSecurity.securityData;
+                const global2FA = window.adminSecurity.getGlobal2FAStatus();
+                
+                showResult('2fa-result', `2FA System Test:\n2FA Enabled: ${securityData.twoFactorEnabled}\n2FA Secret: ${securityData.twoFactorSecret ? 'Present' : 'Missing'}\nGlobal 2FA: ${!!global2FA}\nGlobal Enabled: ${global2FA?.enabled || false}`, 'success');
+            } catch (error) {
+                showResult('2fa-result', `2FA System Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function test2FASync() {
+            try {
+                if (!window.adminSecurity) {
+                    showResult('2fa-result', 'Security System not available', 'error');
+                    return;
+                }
+
+                const result = await window.adminSecurity.forceSync2FAFromRemote();
+                showResult('2fa-result', `2FA Sync Test:\n${JSON.stringify(result, null, 2)}`, result.success ? 'success' : 'error');
+            } catch (error) {
+                showResult('2fa-result', `2FA Sync Error: ${error.message}`, 'error');
+            }
+        }
+
+        function testSyncManager() {
+            try {
+                if (!window.syncManager) {
+                    showResult('sync-result', 'Sync Manager not available', 'error');
+                    return;
+                }
+
+                const status = window.syncManager.getSyncStatus();
+                const validation = window.syncManager.validateSyncData();
+                
+                showResult('sync-result', `Sync Manager Test:\nStatus: ${JSON.stringify(status, null, 2)}\nValidation: ${JSON.stringify(validation, null, 2)}`, 'success');
+            } catch (error) {
+                showResult('sync-result', `Sync Manager Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testFullSync() {
+            try {
+                if (!window.syncManager) {
+                    showResult('sync-result', 'Sync Manager not available', 'error');
+                    return;
+                }
+
+                const result = await window.syncManager.manualSync();
+                showResult('sync-result', `Full Sync Test:\n${JSON.stringify(result, null, 2)}`, result.success ? 'success' : 'error');
+            } catch (error) {
+                showResult('sync-result', `Full Sync Error: ${error.message}`, 'error');
+            }
+        }
+
+        function testValidation() {
+            try {
+                if (!window.syncManager) {
+                    showResult('sync-result', 'Sync Manager not available', 'error');
+                    return;
+                }
+
+                const validation = window.syncManager.validateSyncData();
+                showResult('sync-result', `Validation Test:\n${JSON.stringify(validation, null, 2)}`, validation.isValid ? 'success' : 'warning');
+            } catch (error) {
+                showResult('sync-result', `Validation Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testErrorHandling() {
+            try {
+                if (!window.syncManager) {
+                    showResult('sync-result', 'Sync Manager not available', 'error');
+                    return;
+                }
+
+                // Test error handling by temporarily breaking remote store
+                const originalGetAdminState = window.remoteStore.getAdminState;
+                window.remoteStore.getAdminState = () => Promise.reject(new Error('Test error'));
+
+                const result = await window.syncManager.manualSync();
+                
+                // Restore original function
+                window.remoteStore.getAdminState = originalGetAdminState;
+                
+                showResult('sync-result', `Error Handling Test:\nExpected failure handled: ${!result.success}\nError: ${result.error || result.errors?.join(', ')}`, 'success');
+            } catch (error) {
+                showResult('sync-result', `Error Handling Test Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testPerformance() {
+            try {
+                const startTime = performance.now();
+                
+                // Test multiple sync operations
+                const promises = [];
+                for (let i = 0; i < 5; i++) {
+                    if (window.syncManager) {
+                        promises.push(window.syncManager.performAutoSync());
+                    }
+                }
+                
+                await Promise.all(promises);
+                const endTime = performance.now();
+                const duration = endTime - startTime;
+                
+                showResult('performance-result', `Performance Test:\n5 sync operations completed in ${duration.toFixed(2)}ms\nAverage: ${(duration/5).toFixed(2)}ms per operation`, 'success');
+            } catch (error) {
+                showResult('performance-result', `Performance Test Error: ${error.message}`, 'error');
+            }
+        }
+
+        function showDebugInfo() {
+            try {
+                const debugInfo = {
+                    localStorage: {
+                        globalAdminAccount: localStorage.getItem('global_admin_account'),
+                        global2FA: localStorage.getItem('global_admin_2fa'),
+                        syncStatus: localStorage.getItem('sync_status'),
+                        syncErrors: localStorage.getItem('sync_errors')
+                    },
+                    sessionStorage: {
+                        globalAdminAccount: sessionStorage.getItem('global_admin_account'),
+                        global2FA: sessionStorage.getItem('global_admin_2fa')
+                    },
+                    remoteCache: localStorage.getItem('remote_admin_cache')
+                };
+                
+                showResult('debug-result', `Debug Info:\n${JSON.stringify(debugInfo, null, 2)}`, 'info');
+            } catch (error) {
+                showResult('debug-result', `Debug Info Error: ${error.message}`, 'error');
+            }
+        }
+
+        function clearAllData() {
+            try {
+                // Clear all sync-related data
+                localStorage.removeItem('global_admin_account');
+                localStorage.removeItem('global_admin_2fa');
+                localStorage.removeItem('sync_status');
+                localStorage.removeItem('sync_errors');
+                localStorage.removeItem('remote_admin_cache');
+                localStorage.removeItem('admin_security_data');
+                
+                sessionStorage.removeItem('global_admin_account');
+                sessionStorage.removeItem('global_admin_2fa');
+                sessionStorage.removeItem('admin_security_data');
+                
+                showResult('debug-result', 'All sync data cleared successfully', 'success');
+            } catch (error) {
+                showResult('debug-result', `Clear Data Error: ${error.message}`, 'error');
+            }
+        }
+
+        function resetSyncStatus() {
+            try {
+                if (window.syncManager) {
+                    window.syncManager.resetSyncStatus();
+                    showResult('debug-result', 'Sync status reset successfully', 'success');
+                } else {
+                    showResult('debug-result', 'Sync Manager not available', 'error');
+                }
+            } catch (error) {
+                showResult('debug-result', `Reset Sync Status Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSystemStatus();
+        });
+    </script>
+</body>
+</html>

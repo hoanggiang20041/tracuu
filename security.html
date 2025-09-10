@@ -12,6 +12,8 @@
     <script src="https://cdn.jsdelivr.net/npm/otplib@12.0.1/otplib-browser.js"></script>
     <!-- Remote JSONBin store -->
     <script src="assets/remote-store.js"></script>
+    <!-- Sync Manager -->
+    <script src="assets/sync-manager.js"></script>
     <!-- Production: silence console & basic hardening -->
     <script>
       (function(){
@@ -580,6 +582,18 @@
                             <button onclick="manualSync()" class="btn btn-success">
                                 <i class="fas fa-sync-alt"></i>
                                 Manual Sync
+                            </button>
+                            <button onclick="forceSyncAll()" class="btn btn-primary">
+                                <i class="fas fa-cloud-download-alt"></i>
+                                Force Sync All
+                            </button>
+                            <button onclick="fixSyncIssues()" class="btn btn-warning">
+                                <i class="fas fa-tools"></i>
+                                Fix Sync Issues
+                            </button>
+                            <button onclick="showSyncStatus()" class="btn btn-info">
+                                <i class="fas fa-info-circle"></i>
+                                Sync Status
                             </button>
                             <button onclick="export2FAData()" class="btn btn-warning">
                                 <i class="fas fa-download"></i>
@@ -1683,6 +1697,74 @@
             } catch (e) {
                 showNotification('Lỗi đồng bộ: ' + e.message, 'error');
             }
+        }
+
+        // Force sync all systems
+        async function forceSyncAll() {
+            if (!window.syncManager) {
+                showNotification('Sync Manager không khả dụng!', 'error');
+                return;
+            }
+            
+            try {
+                showNotification('Đang đồng bộ tất cả hệ thống...', 'info');
+                const result = await window.syncManager.manualSync();
+                
+                if (result.success) {
+                    showNotification('Đồng bộ tất cả hệ thống thành công!', 'success');
+                    load2FAStatus(); // Refresh UI
+                } else {
+                    showNotification('Đồng bộ thất bại: ' + (result.errors ? result.errors.join(', ') : result.error), 'error');
+                }
+            } catch (error) {
+                showNotification('Lỗi đồng bộ: ' + error.message, 'error');
+            }
+        }
+        
+        // Fix sync issues
+        async function fixSyncIssues() {
+            if (!window.syncManager) {
+                showNotification('Sync Manager không khả dụng!', 'error');
+                return;
+            }
+            
+            try {
+                showNotification('Đang kiểm tra và sửa vấn đề đồng bộ...', 'info');
+                const result = await window.syncManager.fixSyncIssues();
+                
+                if (result.success) {
+                    showNotification(result.message, 'success');
+                    load2FAStatus(); // Refresh UI
+                } else {
+                    showNotification('Không thể sửa vấn đề: ' + result.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Lỗi khi sửa vấn đề: ' + error.message, 'error');
+            }
+        }
+        
+        // Show sync status
+        function showSyncStatus() {
+            if (!window.syncManager) {
+                showNotification('Sync Manager không khả dụng!', 'error');
+                return;
+            }
+            
+            const status = window.syncManager.getSyncStatus();
+            const validation = window.syncManager.validateSyncData();
+            
+            let message = `Trạng thái đồng bộ:\n`;
+            message += `- Lần đồng bộ cuối: ${status.lastSyncTime}\n`;
+            message += `- Số lần thất bại liên tiếp: ${status.consecutiveFailures}\n`;
+            message += `- Trạng thái: ${status.isHealthy ? 'Khỏe mạnh' : 'Có vấn đề'}\n`;
+            message += `- Cấu hình remote: ${status.isConfigured ? 'Đã cấu hình' : 'Chưa cấu hình'}\n`;
+            message += `- Dữ liệu hợp lệ: ${validation.isValid ? 'Có' : 'Không'}`;
+            
+            if (!validation.isValid) {
+                message += `\n\nVấn đề phát hiện:\n${validation.issues.join('\n')}`;
+            }
+            
+            alert(message);
         }
 
         // Initialize page

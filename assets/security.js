@@ -171,13 +171,43 @@ class AdminSecurity {
                     ...base,
                     twoFactorEnabled: this.securityData.twoFactorEnabled,
                     twoFactorSecret: this.securityData.twoFactorSecret,
-                    updatedAt: Date.now()
+                    updatedAt: Date.now(),
+                    updatedBy: 'admin_security'
                 };
                 await window.remoteStore.setAdminState(state);
                 console.log('2FA data persisted to remote');
             }
         } catch (e) {
             console.warn('persist2FAToRemote failed', e);
+        }
+    }
+    
+    // Force sync 2FA from remote
+    async forceSync2FAFromRemote() {
+        try {
+            if (this.remoteEnabled && window.remoteStore && window.remoteStore.isConfigured()) {
+                const result = await window.remoteStore.forceSyncFromRemote();
+                if (result.success && result.data) {
+                    // Update local security data with remote 2FA data
+                    if (result.data.twoFactorEnabled !== undefined) {
+                        this.securityData.twoFactorEnabled = result.data.twoFactorEnabled;
+                    }
+                    if (result.data.twoFactorSecret) {
+                        this.securityData.twoFactorSecret = result.data.twoFactorSecret;
+                    }
+                    
+                    // Save the updated data
+                    this.saveSecurityData();
+                    
+                    console.log('2FA force synced from remote');
+                    return { success: true, message: 'Đồng bộ 2FA thành công' };
+                }
+                return result;
+            }
+            return { success: false, message: 'Remote store không được cấu hình' };
+        } catch (error) {
+            console.error('Force sync 2FA failed:', error);
+            return { success: false, message: 'Lỗi đồng bộ 2FA: ' + error.message };
         }
     }
     
@@ -368,6 +398,10 @@ class AdminSecurity {
         if (this.verifyTOTPCode(verificationCode, this.securityData.twoFactorSecret)) {
             this.securityData.twoFactorEnabled = true;
             this.saveSecurityData();
+            
+            // Persist to remote immediately
+            this.persist2FAToRemote();
+            
             return { success: true, message: '2FA đã được kích hoạt thành công!' };
         } else {
             return { success: false, message: 'Mã xác thực không đúng!' };
@@ -383,6 +417,10 @@ class AdminSecurity {
             this.securityData.twoFactorEnabled = false;
             // KHÔNG xóa secret key để có thể kích hoạt lại với cùng key
             this.saveSecurityData();
+            
+            // Persist to remote immediately
+            this.persist2FAToRemote();
+            
             return { success: true, message: '2FA đã được tắt thành công!' };
         } else {
             return { success: false, message: 'Mã xác thực không đúng!' };

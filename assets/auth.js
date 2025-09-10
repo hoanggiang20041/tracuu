@@ -303,8 +303,16 @@ class HiddenAuth {
             if (window.remoteStore && window.remoteStore.isConfigured()) {
                 const state = await window.remoteStore.getAdminState();
                 if (state) {
+                    // Ensure we have the correct secret key and challenge for consistency
+                    if (state.secretKey && state.challenge) {
+                        this.secretKey = state.secretKey;
+                        this.challenge = state.challenge;
+                    }
+                    
                     localStorage.setItem(this.globalAdminKey, JSON.stringify(state));
                     sessionStorage.setItem(this.globalAdminKey, JSON.stringify(state));
+                    
+                    console.log('Auth system refreshed from remote with consistent keys');
                 }
             }
         } catch (e) {
@@ -316,11 +324,43 @@ class HiddenAuth {
     async persistToRemote(state) {
         try {
             if (window.remoteStore && window.remoteStore.isConfigured()) {
-                state.updatedAt = Date.now();
-                await window.remoteStore.setAdminState(state);
+                // Ensure state has consistent secret key and challenge
+                const stateToPersist = {
+                    ...state,
+                    secretKey: this.secretKey,
+                    challenge: this.challenge,
+                    updatedAt: Date.now(),
+                    updatedBy: 'hidden_auth'
+                };
+                await window.remoteStore.setAdminState(stateToPersist);
+                console.log('Auth state persisted to remote with consistent keys');
             }
         } catch (e) {
             console.warn('persistToRemote failed', e);
+        }
+    }
+    
+    // Force sync auth system from remote
+    async forceSyncFromRemote() {
+        try {
+            if (window.remoteStore && window.remoteStore.isConfigured()) {
+                const result = await window.remoteStore.forceSyncFromRemote();
+                if (result.success) {
+                    // Update current instance with synced data
+                    const globalAdmin = this.getGlobalAdminData();
+                    if (globalAdmin) {
+                        this.secretKey = globalAdmin.secretKey || this.secretKey;
+                        this.challenge = globalAdmin.challenge || this.challenge;
+                    }
+                    console.log('Auth system force synced from remote');
+                    return { success: true, message: 'Đồng bộ auth system thành công' };
+                }
+                return result;
+            }
+            return { success: false, message: 'Remote store không được cấu hình' };
+        } catch (error) {
+            console.error('Force sync auth system failed:', error);
+            return { success: false, message: 'Lỗi đồng bộ: ' + error.message };
         }
     }
 }

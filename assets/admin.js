@@ -47,6 +47,9 @@ async function initializeAdmin() {
     try {
         console.log('Initializing admin...');
         await loadAllData();
+        
+        // Initialize renewal tabs
+        initializeRenewalTabs();
         await loadAdminExtras();
         setupEventListeners();
         
@@ -267,22 +270,110 @@ async function deleteDiscount(index){
 
 // ===== Renewals (admin view) =====
 function renderRenewals(){
-    const tbody = document.getElementById('renewals-tbody');
+    const renewals = (adminExtras.renewals||[]).slice().sort((a,b)=>b.createdAt-a.createdAt);
+    
+    // Count renewals by status
+    const counts = {
+        pending: renewals.filter(r => r.status === 'pending' || !r.status).length,
+        approved: renewals.filter(r => r.status === 'approved').length,
+        rejected: renewals.filter(r => r.status === 'rejected').length
+    };
+    
+    // Update tab badges
+    updateRenewalTabCounts(counts);
+    
+    // Render each section
+    renderRenewalSection('pending', renewals.filter(r => r.status === 'pending' || !r.status));
+    renderRenewalSection('approved', renewals.filter(r => r.status === 'approved'));
+    renderRenewalSection('rejected', renewals.filter(r => r.status === 'rejected'));
+}
+
+function updateRenewalTabCounts(counts) {
+    const pendingCount = document.getElementById('pending-count');
+    const approvedCount = document.getElementById('approved-count');
+    const rejectedCount = document.getElementById('rejected-count');
+    
+    if (pendingCount) pendingCount.textContent = counts.pending;
+    if (approvedCount) approvedCount.textContent = counts.approved;
+    if (rejectedCount) rejectedCount.textContent = counts.rejected;
+}
+
+function renderRenewalSection(type, renewals) {
+    const tbody = document.getElementById(`${type}-renewals-tbody`);
     if (!tbody) return;
+    
     tbody.innerHTML = '';
-    (adminExtras.renewals||[]).slice().sort((a,b)=>b.createdAt-a.createdAt).forEach((r, idx)=>{
+    
+    if (renewals.length === 0) {
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><code>${r.id}</code></td>
-            <td>${r.name}</td>
-            <td>${r.days}</td>
-            <td>${(r.amount||0).toLocaleString('vi-VN')} đ</td>
-            <td><small>${r.content||''}</small></td>
-            <td>${r.billUrl?`<a href="${r.billUrl}" target="_blank">Xem</a>`:'-'}</td>
-            <td>${r.status||'pending'}</td>
-            <td>
-                ${r.status==='pending'?`<button class="btn btn-success btn-sm" onclick="approveRenewal(${idx})"><i class='fas fa-check'></i></button>`:''}
-            </td>`;
+        tr.innerHTML = `<td colspan="8" class="text-center text-muted">Không có yêu cầu ${type === 'pending' ? 'chờ duyệt' : type === 'approved' ? 'đã duyệt' : 'từ chối'}</td>`;
+        tbody.appendChild(tr);
+        return;
+    }
+    
+    renewals.forEach((r, idx) => {
+        const tr = document.createElement('tr');
+        const originalIndex = (adminExtras.renewals||[]).findIndex(orig => orig === r);
+        
+        // Format dates
+        const createdAt = new Date(r.createdAt).toLocaleString('vi-VN');
+        const approvedAt = r.approvedAt ? new Date(r.approvedAt).toLocaleString('vi-VN') : '-';
+        const rejectedAt = r.rejectedAt ? new Date(r.rejectedAt).toLocaleString('vi-VN') : '-';
+        
+        if (type === 'pending') {
+            // Pending renewals - show action buttons
+            tr.innerHTML = `
+                <td><code>${r.id}</code></td>
+                <td>${r.name}</td>
+                <td><strong>${r.days} ngày</strong></td>
+                <td>${(r.amount||0).toLocaleString('vi-VN')} đ</td>
+                <td><small>${r.content||''}</small></td>
+                <td>${r.billUrl?`<a href="${r.billUrl}" target="_blank" class="btn btn-sm btn-outline-primary">Xem hóa đơn</a>`:'-'}</td>
+                <td><small class="text-muted">${createdAt}</small></td>
+                <td>
+                    <button class="btn btn-info btn-sm" onclick="showCustomerWarranties('${r.id}', '${r.name}')" title="Xem phiếu bảo hành">
+                        <i class='fas fa-eye'></i>
+                    </button>
+                    <button class="btn btn-success btn-sm" onclick="approveRenewal(${originalIndex})" title="Duyệt gia hạn">
+                        <i class='fas fa-check'></i>
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="rejectRenewal(${originalIndex})" title="Từ chối">
+                        <i class='fas fa-times'></i>
+                    </button>
+                </td>`;
+        } else if (type === 'approved') {
+            // Approved renewals - show result info
+            tr.innerHTML = `
+                <td><code>${r.id}</code></td>
+                <td>${r.name}</td>
+                <td><strong>${r.days} ngày</strong></td>
+                <td>${(r.amount||0).toLocaleString('vi-VN')} đ</td>
+                <td><small>${r.content||''}</small></td>
+                <td>${r.billUrl?`<a href="${r.billUrl}" target="_blank" class="btn btn-sm btn-outline-primary">Xem hóa đơn</a>`:'-'}</td>
+                <td><small class="text-muted">${approvedAt}</small></td>
+                <td>
+                    <span class="text-success">
+                        <i class="fas fa-check-circle"></i> 
+                        ${r.updatedWarranties ? `Đã cập nhật ${r.updatedWarranties} phiếu` : 'Đã duyệt'}
+                    </span>
+                </td>`;
+        } else if (type === 'rejected') {
+            // Rejected renewals - show rejection info
+            tr.innerHTML = `
+                <td><code>${r.id}</code></td>
+                <td>${r.name}</td>
+                <td><strong>${r.days} ngày</strong></td>
+                <td>${(r.amount||0).toLocaleString('vi-VN')} đ</td>
+                <td><small>${r.content||''}</small></td>
+                <td>${r.billUrl?`<a href="${r.billUrl}" target="_blank" class="btn btn-sm btn-outline-primary">Xem hóa đơn</a>`:'-'}</td>
+                <td><small class="text-muted">${rejectedAt}</small></td>
+                <td>
+                    <span class="text-danger">
+                        <i class="fas fa-times-circle"></i> Đã từ chối
+                    </span>
+                </td>`;
+        }
+        
         tbody.appendChild(tr);
     });
 }
@@ -293,27 +384,144 @@ async function refreshRenewalsUI(){
     showNotification('Đã tải lại yêu cầu gia hạn', 'success');
 }
 
+// Switch between renewal tabs
+function switchRenewalTab(type) {
+    // Update tab buttons
+    document.querySelectorAll('.renewal-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.getElementById(`${type}-tab-btn`).classList.add('active');
+    
+    // Show/hide sections
+    document.querySelectorAll('.renewal-section').forEach(section => {
+        section.style.display = 'none';
+    });
+    document.getElementById(`${type}-renewals`).style.display = 'block';
+    
+    // Update URL hash for bookmarking
+    window.location.hash = `renewals-${type}`;
+}
+
+// Initialize renewal tabs on page load
+function initializeRenewalTabs() {
+    // Check URL hash for initial tab
+    const hash = window.location.hash;
+    if (hash.includes('renewals-')) {
+        const type = hash.split('renewals-')[1];
+        if (['pending', 'approved', 'rejected'].includes(type)) {
+            switchRenewalTab(type);
+            return;
+        }
+    }
+    
+    // Default to pending tab
+    switchRenewalTab('pending');
+}
+
 async function approveRenewal(index){
     const r = adminExtras.renewals[index];
-    if (!r) return;
-    // Extend warranty end date for customer id
-    const w = allWarranties.find(x => (x.id||x.customerId) === r.id);
-    if (w){
+    if (!r) {
+        showNotification('Không tìm thấy yêu cầu gia hạn!', 'error');
+        return;
+    }
+    
+    console.log('Approving renewal:', r);
+    
+    // Find all warranties for this customer ID
+    const customerWarranties = allWarranties.filter(x => (x.id || x.customerId) === r.id);
+    
+    if (customerWarranties.length === 0) {
+        showNotification(`Không tìm thấy phiếu bảo hành cho khách hàng ID: ${r.id}`, 'error');
+        return;
+    }
+    
+    console.log(`Found ${customerWarranties.length} warranty(ies) for customer ${r.id}`);
+    
+    // Extend warranty end date for all warranties of this customer
+    let updatedCount = 0;
+    for (const w of customerWarranties) {
         const base = w.end ? new Date(w.end) : new Date();
+        const originalEnd = w.end;
         base.setDate(base.getDate() + (parseInt(r.days,10)||0));
         const yyyy = base.getFullYear();
         const mm = String(base.getMonth()+1).padStart(2,'0');
         const dd = String(base.getDate()).padStart(2,'0');
         w.end = `${yyyy}-${mm}-${dd}`;
+        
+        console.log(`Extended warranty for ${w.title || 'Unknown'}: ${originalEnd} -> ${w.end} (+${r.days} days)`);
+        updatedCount++;
+    }
+    
+    if (updatedCount > 0) {
         await saveToJSONBin();
         processDataForDisplay();
         renderWarranties();
         renderCustomers();
     }
+    
+    // Mark renewal as approved
     adminExtras.renewals[index].status = 'approved';
+    adminExtras.renewals[index].approvedAt = Date.now();
+    adminExtras.renewals[index].updatedWarranties = updatedCount;
+    
     await saveAdminExtras();
     renderRenewals();
-    showNotification('Đã duyệt gia hạn và cộng ngày cho khách', 'success');
+    
+    // Switch to approved tab to show the result
+    switchRenewalTab('approved');
+    
+    showNotification(`Đã duyệt gia hạn và cộng ${r.days} ngày cho ${updatedCount} phiếu bảo hành của khách ${r.name} (ID: ${r.id})`, 'success');
+}
+
+async function rejectRenewal(index){
+    const r = adminExtras.renewals[index];
+    if (!r) {
+        showNotification('Không tìm thấy yêu cầu gia hạn!', 'error');
+        return;
+    }
+    
+    // Confirm rejection
+    if (!confirm(`Bạn có chắc chắn muốn từ chối yêu cầu gia hạn của khách ${r.name} (ID: ${r.id})?`)) {
+        return;
+    }
+    
+    // Mark renewal as rejected
+    adminExtras.renewals[index].status = 'rejected';
+    adminExtras.renewals[index].rejectedAt = Date.now();
+    
+    await saveAdminExtras();
+    renderRenewals();
+    
+    // Switch to rejected tab to show the result
+    switchRenewalTab('rejected');
+    
+    showNotification(`Đã từ chối yêu cầu gia hạn của khách ${r.name} (ID: ${r.id})`, 'warning');
+}
+
+// Show customer warranty details before approval
+function showCustomerWarranties(customerId, customerName) {
+    const warranties = allWarranties.filter(w => (w.id || w.customerId) === customerId);
+    
+    if (warranties.length === 0) {
+        alert(`Không tìm thấy phiếu bảo hành nào cho khách hàng ${customerName} (ID: ${customerId})`);
+        return;
+    }
+    
+    let message = `Thông tin phiếu bảo hành của khách ${customerName} (ID: ${customerId}):\n\n`;
+    
+    warranties.forEach((w, index) => {
+        const startDate = w.start || 'Chưa có';
+        const endDate = w.end || 'Chưa có';
+        const title = w.title || 'Không có tiêu đề';
+        
+        message += `${index + 1}. ${title}\n`;
+        message += `   - Bắt đầu: ${startDate}\n`;
+        message += `   - Kết thúc: ${endDate}\n\n`;
+    });
+    
+    message += `Tổng cộng: ${warranties.length} phiếu bảo hành`;
+    
+    alert(message);
 }
 
 // Process raw data for display

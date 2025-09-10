@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Renewal System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+        }
+        .test-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-success { background: #28a745; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-danger { background: #dc3545; }
+        .btn-info { background: #17a2b8; }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warranty-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f9f9f9;
+        }
+        .warranty-card h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .warranty-dates {
+            display: flex;
+            gap: 20px;
+            margin: 10px 0;
+        }
+        .warranty-dates span {
+            background: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1><i class="fas fa-sync-alt"></i> Test Renewal System</h1>
+        
+        <div class="test-section">
+            <h3><i class="fas fa-info-circle"></i> System Status</h3>
+            <div id="system-status">
+                <p>Checking system status...</p>
+            </div>
+            <button class="btn btn-info" onclick="checkSystemStatus()">Refresh Status</button>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-database"></i> Test Data Setup</h3>
+            <button class="btn" onclick="createTestData()">Create Test Data</button>
+            <button class="btn btn-warning" onclick="clearTestData()">Clear Test Data</button>
+            <div id="test-data-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-eye"></i> Current Warranties</h3>
+            <button class="btn" onclick="showCurrentWarranties()">Show Current Warranties</button>
+            <div id="warranties-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-plus"></i> Create Renewal Request</h3>
+            <div style="margin-bottom: 15px;">
+                <label>Customer ID: <input type="text" id="test-customer-id" value="KH001" style="margin-left: 10px; padding: 5px;"></label>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Customer Name: <input type="text" id="test-customer-name" value="Nguyễn Văn An" style="margin-left: 10px; padding: 5px;"></label>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Days to extend: <input type="number" id="test-days" value="30" style="margin-left: 10px; padding: 5px;"></label>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Amount: <input type="number" id="test-amount" value="200000" style="margin-left: 10px; padding: 5px;"></label>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Content: <input type="text" id="test-content" value="Gia hạn bảo hành 30 ngày" style="margin-left: 10px; padding: 5px; width: 300px;"></label>
+            </div>
+            <button class="btn btn-success" onclick="createRenewalRequest()">Create Renewal Request</button>
+            <div id="renewal-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-list"></i> Current Renewal Requests</h3>
+            <button class="btn" onclick="showRenewalRequests()">Show Renewal Requests</button>
+            <div id="renewals-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-check"></i> Test Approval Process</h3>
+            <button class="btn btn-success" onclick="testApprovalProcess()">Test Approval Process</button>
+            <button class="btn btn-danger" onclick="testRejectionProcess()">Test Rejection Process</button>
+            <div id="approval-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-chart-line"></i> Performance Test</h3>
+            <button class="btn" onclick="testPerformance()">Run Performance Test</button>
+            <div id="performance-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-bug"></i> Debug Tools</h3>
+            <button class="btn btn-info" onclick="showDebugInfo()">Show Debug Info</button>
+            <button class="btn btn-warning" onclick="resetAllData()">Reset All Data</button>
+            <div id="debug-result" class="result"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="assets/remote-store.js"></script>
+    <script src="assets/admin.js"></script>
+
+    <script>
+        // Test functions
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+        }
+
+        function checkSystemStatus() {
+            const status = {
+                remoteStore: !!window.remoteStore,
+                allWarranties: window.allWarranties ? window.allWarranties.length : 0,
+                adminExtras: window.adminExtras ? Object.keys(window.adminExtras).length : 0
+            };
+
+            let statusHtml = '';
+            for (const [key, value] of Object.entries(status)) {
+                statusHtml += `<p><strong>${key}:</strong> ${value}</p>`;
+            }
+
+            document.getElementById('system-status').innerHTML = statusHtml;
+        }
+
+        function createTestData() {
+            try {
+                // Create test warranties
+                const testWarranties = [
+                    {
+                        id: "KH001",
+                        name: "Nguyễn Văn An",
+                        title: "Bảo hành điện thoại iPhone 14",
+                        start: "2024-01-15",
+                        end: "2025-01-15",
+                        image: "https://via.placeholder.com/400x200?text=iPhone+14"
+                    },
+                    {
+                        id: "KH001",
+                        name: "Nguyễn Văn An",
+                        title: "Bảo hành tai nghe AirPods",
+                        start: "2024-01-20",
+                        end: "2025-01-20",
+                        image: "https://via.placeholder.com/400x200?text=AirPods"
+                    },
+                    {
+                        id: "KH002",
+                        name: "Trần Thị Bình",
+                        title: "Bảo hành laptop Dell XPS",
+                        start: "2024-02-01",
+                        end: "2025-02-01",
+                        image: "https://via.placeholder.com/400x200?text=Dell+XPS"
+                    }
+                ];
+
+                // Set global variables
+                window.allWarranties = testWarranties;
+                window.adminExtras = {
+                    pricing: { tiers: [{ label: '1 tuần', days: 7, price: 200000 }] },
+                    discounts: [],
+                    renewals: []
+                };
+
+                showResult('test-data-result', `Test data created successfully!\nWarranties: ${testWarranties.length}\nCustomers: 2`, 'success');
+            } catch (error) {
+                showResult('test-data-result', `Error creating test data: ${error.message}`, 'error');
+            }
+        }
+
+        function clearTestData() {
+            try {
+                window.allWarranties = [];
+                window.adminExtras = {
+                    pricing: { tiers: [{ label: '1 tuần', days: 7, price: 200000 }] },
+                    discounts: [],
+                    renewals: []
+                };
+                showResult('test-data-result', 'Test data cleared successfully!', 'success');
+            } catch (error) {
+                showResult('test-data-result', `Error clearing test data: ${error.message}`, 'error');
+            }
+        }
+
+        function showCurrentWarranties() {
+            try {
+                if (!window.allWarranties || window.allWarranties.length === 0) {
+                    showResult('warranties-result', 'No warranties found. Please create test data first.', 'warning');
+                    return;
+                }
+
+                let result = `Current Warranties (${window.allWarranties.length}):\n\n`;
+                
+                // Group by customer
+                const customerMap = new Map();
+                window.allWarranties.forEach(w => {
+                    const customerId = w.id || w.customerId;
+                    if (!customerMap.has(customerId)) {
+                        customerMap.set(customerId, []);
+                    }
+                    customerMap.get(customerId).push(w);
+                });
+
+                customerMap.forEach((warranties, customerId) => {
+                    result += `Customer ${customerId} (${warranties[0].name}):\n`;
+                    warranties.forEach((w, index) => {
+                        result += `  ${index + 1}. ${w.title}\n`;
+                        result += `     Start: ${w.start}\n`;
+                        result += `     End: ${w.end}\n\n`;
+                    });
+                });
+
+                showResult('warranties-result', result, 'info');
+            } catch (error) {
+                showResult('warranties-result', `Error showing warranties: ${error.message}`, 'error');
+            }
+        }
+
+        function createRenewalRequest() {
+            try {
+                const customerId = document.getElementById('test-customer-id').value;
+                const customerName = document.getElementById('test-customer-name').value;
+                const days = parseInt(document.getElementById('test-days').value);
+                const amount = parseInt(document.getElementById('test-amount').value);
+                const content = document.getElementById('test-content').value;
+
+                if (!customerId || !customerName || !days || !amount || !content) {
+                    showResult('renewal-result', 'Please fill in all fields!', 'error');
+                    return;
+                }
+
+                const renewalRequest = {
+                    id: customerId,
+                    name: customerName,
+                    days: days,
+                    amount: amount,
+                    content: content,
+                    billUrl: '',
+                    status: 'pending',
+                    createdAt: Date.now()
+                };
+
+                if (!window.adminExtras) {
+                    window.adminExtras = { renewals: [] };
+                }
+                if (!window.adminExtras.renewals) {
+                    window.adminExtras.renewals = [];
+                }
+
+                window.adminExtras.renewals.push(renewalRequest);
+
+                showResult('renewal-result', `Renewal request created successfully!\n${JSON.stringify(renewalRequest, null, 2)}`, 'success');
+            } catch (error) {
+                showResult('renewal-result', `Error creating renewal request: ${error.message}`, 'error');
+            }
+        }
+
+        function showRenewalRequests() {
+            try {
+                if (!window.adminExtras || !window.adminExtras.renewals || window.adminExtras.renewals.length === 0) {
+                    showResult('renewals-result', 'No renewal requests found.', 'warning');
+                    return;
+                }
+
+                let result = `Renewal Requests (${window.adminExtras.renewals.length}):\n\n`;
+                
+                window.adminExtras.renewals.forEach((r, index) => {
+                    result += `${index + 1}. ${r.name} (ID: ${r.id})\n`;
+                    result += `   Days: ${r.days}\n`;
+                    result += `   Amount: ${r.amount.toLocaleString('vi-VN')} đ\n`;
+                    result += `   Status: ${r.status}\n`;
+                    result += `   Created: ${new Date(r.createdAt).toLocaleString('vi-VN')}\n\n`;
+                });
+
+                showResult('renewals-result', result, 'info');
+            } catch (error) {
+                showResult('renewals-result', `Error showing renewal requests: ${error.message}`, 'error');
+            }
+        }
+
+        function testApprovalProcess() {
+            try {
+                if (!window.adminExtras || !window.adminExtras.renewals || window.adminExtras.renewals.length === 0) {
+                    showResult('approval-result', 'No renewal requests to approve. Please create one first.', 'warning');
+                    return;
+                }
+
+                // Find first pending request
+                const pendingIndex = window.adminExtras.renewals.findIndex(r => r.status === 'pending');
+                if (pendingIndex === -1) {
+                    showResult('approval-result', 'No pending renewal requests found.', 'warning');
+                    return;
+                }
+
+                const request = window.adminExtras.renewals[pendingIndex];
+                
+                // Simulate approval process
+                const customerWarranties = window.allWarranties.filter(w => (w.id || w.customerId) === request.id);
+                
+                let result = `Testing approval process for request ${pendingIndex + 1}:\n`;
+                result += `Customer: ${request.name} (ID: ${request.id})\n`;
+                result += `Days to extend: ${request.days}\n`;
+                result += `Found warranties: ${customerWarranties.length}\n\n`;
+
+                if (customerWarranties.length > 0) {
+                    result += `Warranties before extension:\n`;
+                    customerWarranties.forEach((w, index) => {
+                        result += `  ${index + 1}. ${w.title}: ${w.end}\n`;
+                    });
+
+                    // Simulate extension
+                    customerWarranties.forEach(w => {
+                        const base = w.end ? new Date(w.end) : new Date();
+                        base.setDate(base.getDate() + request.days);
+                        const yyyy = base.getFullYear();
+                        const mm = String(base.getMonth() + 1).padStart(2, '0');
+                        const dd = String(base.getDate()).padStart(2, '0');
+                        w.end = `${yyyy}-${mm}-${dd}`;
+                    });
+
+                    result += `\nWarranties after extension:\n`;
+                    customerWarranties.forEach((w, index) => {
+                        result += `  ${index + 1}. ${w.title}: ${w.end}\n`;
+                    });
+
+                    // Mark as approved
+                    request.status = 'approved';
+                    request.approvedAt = Date.now();
+                    request.updatedWarranties = customerWarranties.length;
+
+                    result += `\nRequest approved successfully!`;
+                } else {
+                    result += `No warranties found for this customer.`;
+                }
+
+                showResult('approval-result', result, 'success');
+            } catch (error) {
+                showResult('approval-result', `Error testing approval process: ${error.message}`, 'error');
+            }
+        }
+
+        function testRejectionProcess() {
+            try {
+                if (!window.adminExtras || !window.adminExtras.renewals || window.adminExtras.renewals.length === 0) {
+                    showResult('approval-result', 'No renewal requests to reject. Please create one first.', 'warning');
+                    return;
+                }
+
+                // Find first pending request
+                const pendingIndex = window.adminExtras.renewals.findIndex(r => r.status === 'pending');
+                if (pendingIndex === -1) {
+                    showResult('approval-result', 'No pending renewal requests found.', 'warning');
+                    return;
+                }
+
+                const request = window.adminExtras.renewals[pendingIndex];
+                
+                // Simulate rejection
+                request.status = 'rejected';
+                request.rejectedAt = Date.now();
+
+                let result = `Testing rejection process for request ${pendingIndex + 1}:\n`;
+                result += `Customer: ${request.name} (ID: ${request.id})\n`;
+                result += `Days requested: ${request.days}\n`;
+                result += `Amount: ${request.amount.toLocaleString('vi-VN')} đ\n`;
+                result += `\nRequest rejected successfully!`;
+
+                showResult('approval-result', result, 'warning');
+            } catch (error) {
+                showResult('approval-result', `Error testing rejection process: ${error.message}`, 'error');
+            }
+        }
+
+        function testPerformance() {
+            try {
+                const startTime = performance.now();
+                
+                // Test multiple operations
+                const operations = [];
+                for (let i = 0; i < 100; i++) {
+                    operations.push({
+                        id: `TEST${i}`,
+                        name: `Test Customer ${i}`,
+                        days: 30,
+                        amount: 200000,
+                        content: `Test renewal ${i}`,
+                        status: 'pending',
+                        createdAt: Date.now()
+                    });
+                }
+                
+                // Simulate processing
+                operations.forEach(op => {
+                    const warranties = window.allWarranties.filter(w => (w.id || w.customerId) === op.id);
+                    warranties.forEach(w => {
+                        const base = w.end ? new Date(w.end) : new Date();
+                        base.setDate(base.getDate() + op.days);
+                        const yyyy = base.getFullYear();
+                        const mm = String(base.getMonth() + 1).padStart(2, '0');
+                        const dd = String(base.getDate()).padStart(2, '0');
+                        w.end = `${yyyy}-${mm}-${dd}`;
+                    });
+                });
+                
+                const endTime = performance.now();
+                const duration = endTime - startTime;
+                
+                showResult('performance-result', `Performance Test Results:\n100 operations completed in ${duration.toFixed(2)}ms\nAverage: ${(duration/100).toFixed(2)}ms per operation`, 'success');
+            } catch (error) {
+                showResult('performance-result', `Performance test error: ${error.message}`, 'error');
+            }
+        }
+
+        function showDebugInfo() {
+            try {
+                const debugInfo = {
+                    allWarranties: window.allWarranties || [],
+                    adminExtras: window.adminExtras || {},
+                    renewalRequests: window.adminExtras?.renewals || []
+                };
+                
+                showResult('debug-result', `Debug Info:\n${JSON.stringify(debugInfo, null, 2)}`, 'info');
+            } catch (error) {
+                showResult('debug-result', `Debug info error: ${error.message}`, 'error');
+            }
+        }
+
+        function resetAllData() {
+            try {
+                window.allWarranties = [];
+                window.adminExtras = {
+                    pricing: { tiers: [{ label: '1 tuần', days: 7, price: 200000 }] },
+                    discounts: [],
+                    renewals: []
+                };
+                
+                // Clear all result divs
+                const resultDivs = document.querySelectorAll('.result');
+                resultDivs.forEach(div => {
+                    div.textContent = '';
+                    div.className = 'result';
+                });
+                
+                showResult('debug-result', 'All data reset successfully!', 'success');
+            } catch (error) {
+                showResult('debug-result', `Reset error: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSystemStatus();
+        });
+    </script>
+</body>
+</html>
