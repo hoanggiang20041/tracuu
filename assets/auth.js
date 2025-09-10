@@ -110,13 +110,9 @@ class HiddenAuth {
         const storedSecretKey = globalAdmin.secretKey || this.secretKey;
         const storedChallenge = globalAdmin.challenge || this.challenge;
         
-        // Create temporary auth instance with stored values
-        const tempAuth = new HiddenAuth();
-        tempAuth.secretKey = storedSecretKey;
-        tempAuth.challenge = storedChallenge;
-        
-        // Verify password using consistent hash
-        const inputHash = tempAuth.encryptInput(input);
+        // Verify password using consistent hash with stored values
+        const combined = storedSecretKey + input + storedChallenge;
+        const inputHash = this.simpleHash(combined);
         const storedHash = globalAdmin.passwordHash;
         
         console.log('Password verification:', {
