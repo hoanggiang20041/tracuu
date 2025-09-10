@@ -23,11 +23,24 @@ export async function onRequest(context) {
             hasBinId: !!env.JSONBIN_ID,
             hasKey: !!env.JSONBIN_KEY,
             hasAccess: !!env.JSONBIN_ACCESS_KEY,
+            allowQueryKeys: env.ALLOW_QUERY_KEYS === 'true',
             time: Date.now()
           }), { status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }});
         }
 
-        if (!env.JSONBIN_ID || !env.JSONBIN_KEY) {
+        // Lấy config từ ENV hoặc (tùy chọn) query string nếu được cho phép
+        const allowQuery = env.ALLOW_QUERY_KEYS === 'true';
+        let binId = env.JSONBIN_ID;
+        let masterKey = env.JSONBIN_KEY;
+        let accessKey = env.JSONBIN_ACCESS_KEY;
+
+        if ((!binId || !masterKey) && allowQuery) {
+          binId = url.searchParams.get('id') || binId;
+          masterKey = url.searchParams.get('key') || masterKey;
+          accessKey = url.searchParams.get('access') || accessKey;
+        }
+
+        if (!binId || !masterKey) {
           console.error('Missing JSONBin environment variables');
           // Dev fallback: trả về mảng rỗng để client vẫn chạy được
           return new Response(JSON.stringify([]), {
@@ -36,10 +49,23 @@ export async function onRequest(context) {
           });
         }
 
-        const headers = { 'X-Master-Key': env.JSONBIN_KEY, 'X-Bin-Meta': 'false' };
-        // If no access key supplied by env, mirror master key into X-Access-Key per user setup
-        headers['X-Access-Key'] = env.JSONBIN_ACCESS_KEY || env.JSONBIN_KEY;
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${env.JSONBIN_ID}/latest`, { headers });
+        const buildHeaders = (mk, ak) => {
+          const h = { 'X-Master-Key': mk, 'X-Bin-Meta': 'false' };
+          h['X-Access-Key'] = ak || mk; // mirror nếu không có access riêng
+          return h;
+        };
+
+        let response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, { headers: buildHeaders(masterKey, accessKey) });
+        // Nếu lỗi 401/403 và cho phép, thử lại với key từ query (nếu khác)
+        if (!response.ok && allowQuery) {
+          const qId = url.searchParams.get('id');
+          const qKey = url.searchParams.get('key');
+          const qAccess = url.searchParams.get('access');
+          if ((qId && qKey) && (qId !== binId || qKey !== masterKey || qAccess !== accessKey)) {
+            binId = qId; masterKey = qKey; accessKey = qAccess;
+            response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, { headers: buildHeaders(masterKey, accessKey) });
+          }
+        }
 
         if (!response.ok) {
           console.error(`JSONBin API error: ${response.status} ${response.statusText}`);
@@ -80,9 +106,20 @@ export async function onRequest(context) {
   
     if (request.method === 'PUT') {
       const body = await request.text();
-      const putHeaders = { 'X-Master-Key': env.JSONBIN_KEY, 'Content-Type': 'application/json' };
-      putHeaders['X-Access-Key'] = env.JSONBIN_ACCESS_KEY || env.JSONBIN_KEY;
-      const response = await fetch(`https://api.jsonbin.io/v3/b/${env.JSONBIN_ID}`, {
+      // PUT: cũng hỗ trợ query khi ALLOW_QUERY_KEYS=true
+      const allowQuery = env.ALLOW_QUERY_KEYS === 'true';
+      let binId = env.JSONBIN_ID;
+      let masterKey = env.JSONBIN_KEY;
+      let accessKey = env.JSONBIN_ACCESS_KEY;
+      if ((!binId || !masterKey) && allowQuery) {
+        binId = url.searchParams.get('id') || binId;
+        masterKey = url.searchParams.get('key') || masterKey;
+        accessKey = url.searchParams.get('access') || accessKey;
+      }
+
+      const putHeaders = { 'X-Master-Key': masterKey, 'Content-Type': 'application/json' };
+      putHeaders['X-Access-Key'] = accessKey || masterKey;
+      const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
         method: 'PUT',
         headers: putHeaders,
         body
