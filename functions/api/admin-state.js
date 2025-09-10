@@ -25,18 +25,25 @@ export async function onRequest(context) {
         const hasKey = !!MASTER_KEY;
         const hasAccess = !!ACCESS_KEY;
         let remoteOk = null;
+        let errorDetails = null;
         if (hasBinId && hasKey) {
             try {
                 const baseHeaders = { 'X-Master-Key': MASTER_KEY, 'X-Bin-Meta': 'false' };
                 // Fallback: if no access key configured, try mirroring master into X-Access-Key per user setup
                 const headers = hasAccess ? { ...baseHeaders, 'X-Access-Key': ACCESS_KEY } : { ...baseHeaders, 'X-Access-Key': MASTER_KEY };
+                console.log('Testing JSONBin with headers:', { binId: BIN_ID, masterKey: MASTER_KEY.substring(0, 10) + '...', hasAccess });
                 const ping = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
                     method: 'GET',
                     headers
                 });
                 remoteOk = ping.status;
+                if (!ping.ok) {
+                    const errorText = await ping.text();
+                    errorDetails = { status: ping.status, statusText: ping.statusText, body: errorText.substring(0, 200) };
+                }
             } catch (e) {
                 remoteOk = 'network_error';
+                errorDetails = { error: e.message };
             }
         }
         return new Response(JSON.stringify({
@@ -45,6 +52,7 @@ export async function onRequest(context) {
             hasKey,
             hasAccess,
             remoteOk,
+            errorDetails,
             time: Date.now()
         }), { status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' } });
     }
@@ -73,7 +81,9 @@ export async function onRequest(context) {
                 'X-Bin-Meta': 'false',
                 ...(ACCESS_KEY ? { 'X-Access-Key': ACCESS_KEY } : { 'X-Access-Key': MASTER_KEY })
             };
+            console.log('GET request to JSONBin:', { binId: BIN_ID, masterKey: MASTER_KEY.substring(0, 10) + '...' });
             const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: getHeaders });
+            console.log('JSONBin response:', { status: res.status, statusText: res.statusText });
             if (!res.ok) {
                 // If unauthorized/forbidden, return dev fallback instead of propagating error
                 if (res.status === 401 || res.status === 403) {

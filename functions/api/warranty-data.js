@@ -18,12 +18,27 @@ export async function onRequest(context) {
       try {
         // Kiểm tra environment variables
         if (url.searchParams.get('diag') === '1') {
+          let testResult = null;
+          if (env.JSONBIN_ID && env.JSONBIN_KEY) {
+            try {
+              const headers = { 'X-Master-Key': env.JSONBIN_KEY, 'X-Bin-Meta': 'false', 'X-Access-Key': env.JSONBIN_ACCESS_KEY || env.JSONBIN_KEY };
+              const test = await fetch(`https://api.jsonbin.io/v3/b/${env.JSONBIN_ID}/latest`, { headers });
+              testResult = { status: test.status, statusText: test.statusText };
+              if (!test.ok) {
+                const errorText = await test.text();
+                testResult.errorBody = errorText.substring(0, 200);
+              }
+            } catch (e) {
+              testResult = { error: e.message };
+            }
+          }
           return new Response(JSON.stringify({
             ok: true,
             hasBinId: !!env.JSONBIN_ID,
             hasKey: !!env.JSONBIN_KEY,
             hasAccess: !!env.JSONBIN_ACCESS_KEY,
             allowQueryKeys: env.ALLOW_QUERY_KEYS === 'true',
+            testResult,
             time: Date.now()
           }), { status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }});
         }
