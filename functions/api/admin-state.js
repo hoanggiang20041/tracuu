@@ -17,17 +17,19 @@ export async function onRequest(context) {
     // Prefer dedicated admin bin vars, fallback to general ones if missing
     const BIN_ID = env.JSONBIN_ADMIN_ID || env.JSONBIN_ID;
     const MASTER_KEY = env.JSONBIN_ADMIN_KEY || env.JSONBIN_KEY;
+    const ACCESS_KEY = env.JSONBIN_ADMIN_ACCESS_KEY || env.JSONBIN_ACCESS_KEY;
 
     // Diagnostics mode (no secrets leaked)
     if (url.searchParams.get('diag') === '1') {
         const hasBinId = !!BIN_ID;
         const hasKey = !!MASTER_KEY;
+        const hasAccess = !!ACCESS_KEY;
         let remoteOk = null;
         if (hasBinId && hasKey) {
             try {
                 const ping = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
                     method: 'GET',
-                    headers: { 'X-Master-Key': MASTER_KEY, 'X-Bin-Meta': 'false' }
+                    headers: { 'X-Master-Key': MASTER_KEY, ...(hasAccess?{'X-Access-Key':ACCESS_KEY}:{}) , 'X-Bin-Meta': 'false' }
                 });
                 remoteOk = ping.status;
             } catch (e) {
@@ -38,6 +40,7 @@ export async function onRequest(context) {
             ok: true,
             hasBinId,
             hasKey,
+            hasAccess,
             remoteOk,
             time: Date.now()
         }), { status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' } });
@@ -65,6 +68,7 @@ export async function onRequest(context) {
             const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
                 headers: {
                     'X-Master-Key': MASTER_KEY,
+                    ...(ACCESS_KEY ? { 'X-Access-Key': ACCESS_KEY } : {}),
                     'X-Bin-Meta': 'false'
                 }
             });
@@ -106,6 +110,7 @@ export async function onRequest(context) {
                 method: 'PUT',
                 headers: {
                     'X-Master-Key': MASTER_KEY,
+                    ...(ACCESS_KEY ? { 'X-Access-Key': ACCESS_KEY } : {}),
                     'Content-Type': 'application/json'
                 },
                 body
