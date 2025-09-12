@@ -167,7 +167,7 @@ async function loadAllData() {
     try {
         console.log('Loading data from Supabase...');
         
-        const response = await fetch(SUPABASE_GET_URL);
+        const response = await fetch(SUPABASE_GET_URL + '?v=' + Date.now());
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
