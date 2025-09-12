@@ -1,7 +1,7 @@
-// Cấu hình JSONBin.io
+// Cấu hình Supabase
 // Switch to server proxy to avoid exposing keys
-const JSONBIN_GET_URL = 'https://tracuu-5j4.pages.dev/api/warranty-data';
-const JSONBIN_PUT_URL = 'https://tracuu-5j4.pages.dev/api/warranty-data';
+const SUPABASE_GET_URL = 'https://tracuu-5j4.pages.dev/api/supabase-warranty-data';
+const SUPABASE_PUT_URL = 'https://tracuu-5j4.pages.dev/api/supabase-warranty-data';
 
 // Global variables
 let allWarranties = [];
@@ -162,12 +162,12 @@ function setupEventListeners() {
     setTimeout(setupImageLightbox, 300);
 }
 
-// Load all data from JSONBin
+// Load all data from Supabase
 async function loadAllData() {
     try {
-        console.log('Loading data from JSONBin...');
+        console.log('Loading data from Supabase...');
         
-        const response = await fetch(JSONBIN_GET_URL, { headers: { "X-Bin-Meta": "false" } });
+        const response = await fetch(SUPABASE_GET_URL);
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -934,13 +934,13 @@ async function saveToJSONBin() {
             console.log('No valid data to save, sending empty array');
         }
         
-        const response = await fetch(JSONBIN_PUT_URL, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cleanData) });
+        const response = await fetch(SUPABASE_PUT_URL, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cleanData) });
         
-        console.log('JSONBin response status:', response.status);
+        console.log('Supabase response status:', response.status);
         
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('JSONBin error response:', errorText);
+            console.error('Supabase error response:', errorText);
             
             // Thử parse error response để có thông tin chi tiết hơn
             try {

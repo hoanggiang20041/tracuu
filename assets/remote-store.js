@@ -11,8 +11,8 @@ class RemoteStore {
         if (!this.config && window.JSONBIN_DEFAULT && window.JSONBIN_DEFAULT.binId && window.JSONBIN_DEFAULT.masterKey) {
             this.saveConfig({ binId: window.JSONBIN_DEFAULT.binId, masterKey: window.JSONBIN_DEFAULT.masterKey });
         }
-        // Use relative proxy endpoint (server-side) to avoid exposing keys on client
-        this.baseUrl = '/api/admin-state';
+        // Use Supabase endpoint instead of JSONBin
+        this.baseUrl = '/api/supabase-admin-state';
     }
 
     getSyncStatus() {
