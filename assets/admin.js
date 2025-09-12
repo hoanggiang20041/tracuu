@@ -1,7 +1,7 @@
 // Cấu hình Supabase
 // Switch to server proxy to avoid exposing keys
-const SUPABASE_GET_URL = '/api/supabase-warranty-data';
-const SUPABASE_PUT_URL = '/api/supabase-warranty-data';
+const SUPABASE_GET_URL = '/api/warranty-data';
+const SUPABASE_PUT_URL = '/api/warranty-data';
 
 // Global variables
 let allWarranties = [];

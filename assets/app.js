@@ -19,7 +19,7 @@
 })();
 
 // Cấu hình API endpoint (sử dụng proxy để ẩn thông tin nhạy cảm)
-const API_URL = "/api/supabase-warranty-data";
+const API_URL = "/api/warranty-data";
 
 // DOM Elements
 const loadingOverlay = document.getElementById("loading-overlay");
