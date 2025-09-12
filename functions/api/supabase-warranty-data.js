@@ -139,7 +139,22 @@ export async function onRequest(context) {
                 });
             }
 
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+            } catch (e) {
+                console.error('PUT JSON parse error:', e);
+                const responseText = await response.text();
+                console.log('PUT Response text:', responseText);
+                return new Response(JSON.stringify({
+                    error: 'Failed to parse Supabase response',
+                    message: `Supabase returned ${response.status}: ${response.statusText}`,
+                    responseText: responseText.substring(0, 200)
+                }), {
+                    status: 500,
+                    headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
+                });
+            }
             return new Response(JSON.stringify(data), {
                 status: 200,
                 headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
