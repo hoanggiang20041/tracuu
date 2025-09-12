@@ -88,7 +88,18 @@ export async function onRequest(context) {
                 });
             }
 
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+                console.log('Supabase response:', data);
+            } catch (e) {
+                console.error('JSON parse error:', e);
+                console.log('Response text:', await response.text());
+                return new Response(JSON.stringify([]), {
+                    status: 200,
+                    headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
+                });
+            }
             const records = data && data[0] ? data[0].data : [];
             
             return new Response(JSON.stringify(records), {
