@@ -1,0 +1,11 @@
+# Cloudflare Pages headers configuration
+# Đặt MIME type cho các file JavaScript
+
+/config.js
+  Content-Type: application/javascript; charset=utf-8
+
+/assets/*.js
+  Content-Type: application/javascript; charset=utf-8
+
+/*.js
+  Content-Type: application/javascript; charset=utf-8

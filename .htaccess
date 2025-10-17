@@ -1,0 +1,15 @@
+# Apache configuration for proper MIME types
+# Đặt MIME type cho các file JavaScript
+
+<Files "config.js">
+    Header set Content-Type "application/javascript; charset=utf-8"
+</Files>
+
+<Files "*.js">
+    Header set Content-Type "application/javascript; charset=utf-8"
+</Files>
+
+# CORS headers
+Header always set Access-Control-Allow-Origin "*"
+Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization"

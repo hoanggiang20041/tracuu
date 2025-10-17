@@ -205,7 +205,30 @@
 	</footer>
 
 	<!-- Load cấu hình từ file riêng -->
-	<script src="config.js"></script>
+	<script>
+		// Cấu hình trực tiếp trong HTML để tránh lỗi MIME type
+		window.APP_CONFIG = {
+			// Google OAuth
+			GOOGLE_CLIENT_ID: '518155976409-66vkttabqhsaqc5ph72p91er15a556au.apps.googleusercontent.com',
+			ADMIN_GOOGLE_EMAIL: 'giang10012004@gmail.com',
+			
+			// Google Sheets (Excel online)
+			GS_PUBLISHED_CSV_URL: 'https://docs.google.com/spreadsheets/d/1VjrQ2HfzMuSlqMH5MICCZn9wnSjnIY_co7SOfvHM-vw/pub?output=csv',
+			
+			// Google Apps Script API URL (sau khi deploy)
+			GAS_API_URL: 'https://script.google.com/macros/s/AKfycbx3u2ZzoCcOLWKgn7fzgdSoXQ6Wd65asH9RZlzPRwQT7t3XERs1jJsiGuVcgAr3Z95pwA/exec',
+			
+			// API endpoints (nếu có)
+			API_BASE_URL: '/api',
+			
+			// Các cấu hình khác
+			APP_NAME: 'Hệ thống tra cứu bảo hành',
+			VERSION: '1.0.0',
+			
+			// Debug mode (chỉ bật khi phát triển)
+			DEBUG: false
+		};
+	</script>
 	<script>
 		// Fallback nếu config.js không load được
 		if (typeof window.APP_CONFIG === 'undefined') {
