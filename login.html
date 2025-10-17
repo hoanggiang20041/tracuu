@@ -19,6 +19,7 @@
 		
 		.login-card {
 			background: rgba(255, 255, 255, 0.95);
+			-webkit-backdrop-filter: blur(20px);
 			backdrop-filter: blur(20px);
 			border-radius: 24px;
 			padding: 40px;
@@ -61,6 +62,8 @@
 		.login-subtitle {
 			color: #666;
 			font-size: 1rem;
+			-webkit-text-size-adjust: 100%;
+			text-size-adjust: 100%;
 		}
 		
 		.login-form {
@@ -249,57 +252,26 @@
 					<i class="fas fa-user-shield"></i>
 				</div>
 				<h1 class="login-title">Đăng nhập Admin</h1>
-				<p class="login-subtitle">Nhập mật khẩu để truy cập trang quản lý</p>
+				<p class="login-subtitle">Chỉ đăng nhập bằng Google</p>
 			</div>
 			
-			<form id="login-form" class="login-form">
-				<div class="password-field">
-					<input 
-						type="password" 
-						id="password" 
-						placeholder="Nhập mật khẩu admin..." 
-						required 
-						autocomplete="current-password"
-					/>
-					<button type="button" class="password-toggle" onclick="togglePassword()">
-						<i class="fas fa-eye"></i>
-					</button>
-				</div>
-				
-				<div class="password-field" id="2fa-field" style="display: none;">
-					<input 
-						type="text" 
-						id="twoFactorCode" 
-						placeholder="Nhập mã 2FA (6 số)..." 
-						maxlength="6"
-						pattern="[0-9]{6}"
-					/>
-					<div style="margin-top: 10px; text-align: center; font-size: 0.8rem; color: #666;">
-						<i class="fas fa-info-circle"></i> 
-						Lấy mã từ ứng dụng xác thực hoặc 
-						<a href="https://2fa.live/" target="_blank" style="color: #667eea; text-decoration: none;">2fa.live</a>
-					</div>
-				</div>
-				
-				<button type="submit" class="login-btn" id="login-btn">
-					<i class="fas fa-sign-in-alt"></i>
-					<span>Đăng nhập</span>
-				</button>
-			</form>
+			<!-- Form đăng nhập đã được ẩn - chỉ dùng Google Sign-In -->
+
+			<div style="margin: 10px 0; color:#6b7280; font-size:0.9rem;"></div>
+			<div id="google-signin-btn" style="display:flex; justify-content:center;"></div>
 			
 			<div id="error-message" class="error-message" style="display: none;"></div>
 			
 			<div class="back-link">
-				<a href="index.html">
-					<i class="fas fa-arrow-left"></i>
+				<a href="index.html" title="Quay về trang chính" aria-label="Quay về trang chính">
+					<i class="fas fa-arrow-left" aria-hidden="true"></i>
 					Về trang chính
 				</a>
 			</div>
 		</div>
 	</div>
 
-	<script src="assets/totp-auth.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/otplib@12.0.1/otplib-browser.js"></script>
+	<!-- Đã xóa TOTP và OTP lib - chỉ dùng Google Sign-In -->
 	<script>
 		(function(){
 			var PROD=true; if(!PROD) return;
@@ -310,42 +282,29 @@
 			document.addEventListener('keydown',function(e){var k=e.key.toLowerCase(); if(k==='f12'||((e.ctrlKey||e.metaKey)&&(['s','u','p'].indexOf(k)>-1))){e.preventDefault();}});
 		})();
 	</script>
-	<script src="assets/auth.js"></script>
-	<script src="assets/remote-store.js"></script>
-	<script src="assets/sync-manager.js"></script>
-	<script src="assets/security.js"></script>
+	<!-- Load cấu hình từ file riêng -->
+	<script src="config.js"></script>
 	<script>
-		// Hệ thống xác thực hoàn toàn ẩn mật khẩu
-		// Không có mật khẩu nào trong code
-		
-		// Rate limiting đơn giản
-		function checkRateLimit() {
-			const attempts = parseInt(localStorage.getItem('admin_failed_attempts') || '0');
-			const lockoutUntil = localStorage.getItem('admin_lockout_until');
-			const now = Date.now();
-			
-			if (lockoutUntil && now < parseInt(lockoutUntil)) {
-				const remaining = Math.ceil((parseInt(lockoutUntil) - now) / 60000);
-				throw new Error(`Tài khoản bị khóa ${remaining} phút do đăng nhập sai quá nhiều lần!`);
-			}
-			
-			if (attempts >= 5) {
-				const lockoutUntil = now + (15 * 60 * 1000); // 15 phút
-				localStorage.setItem('admin_lockout_until', lockoutUntil.toString());
-				throw new Error("Tài khoản bị khóa 15 phút do đăng nhập sai quá nhiều lần!");
-			}
+		// Fallback nếu config.js không load được
+		if (typeof window.APP_CONFIG === 'undefined') {
+			console.error('Không tìm thấy file config.js! Vui lòng tạo file config.js từ config.example.js');
+			window.APP_CONFIG = {
+				GOOGLE_CLIENT_ID: '',
+				ADMIN_GOOGLE_EMAIL: '',
+				GS_PUBLISHED_CSV_URL: '',
+				DEBUG: true
+			};
 		}
 		
-		function recordFailedAttempt() {
-			const attempts = parseInt(localStorage.getItem('admin_failed_attempts') || '0') + 1;
-			localStorage.setItem('admin_failed_attempts', attempts.toString());
-		}
-		
-		function clearAttempts() {
-			localStorage.removeItem('admin_failed_attempts');
-			localStorage.removeItem('admin_lockout_until');
-		}
-		
+		// Sử dụng config
+		window.GOOGLE_CLIENT_ID = window.APP_CONFIG.GOOGLE_CLIENT_ID;
+		window.ADMIN_GOOGLE_EMAIL = window.APP_CONFIG.ADMIN_GOOGLE_EMAIL;
+	</script>
+	<script src="https://accounts.google.com/gsi/client" async defer></script>
+	<script src="assets/google-auth.js"></script>
+	<!-- Đã xóa auth.js, remote-store.js, sync-manager.js, security.js - chỉ dùng Google Sign-In -->
+	<script>
+		// Chỉ dùng Google Sign-In - không cần mật khẩu hay 2FA
 		function showError(message) {
 			const errorDiv = document.getElementById('error-message');
 			errorDiv.textContent = message;
@@ -357,184 +316,10 @@
 			document.getElementById('error-message').style.display = 'none';
 		}
 		
-		function setLoading(loading) {
-			const btn = document.getElementById('login-btn');
-			if (loading) {
-				btn.classList.add('loading');
-				btn.disabled = true;
-			} else {
-				btn.classList.remove('loading');
-				btn.disabled = false;
-			}
-		}
-		
-		// Toggle password visibility
-		function togglePassword() {
-			const input = document.getElementById('password');
-			const toggle = document.querySelector('.password-toggle i');
-			
-			if (input.type === 'password') {
-				input.type = 'text';
-				toggle.className = 'fas fa-eye-slash';
-			} else {
-				input.type = 'password';
-				toggle.className = 'fas fa-eye';
-			}
-		}
-		
-		document.getElementById("login-form").addEventListener("submit", async function(e) {
-			e.preventDefault();
-			
-			const password = document.getElementById("password").value;
-			const twoFactorCode = document.getElementById("twoFactorCode").value;
-			
-			// Check if 2FA is required (using global 2FA status)
-			let requires2FA = false;
-			const global2FA = getGlobal2FAStatus();
-			if (global2FA && global2FA.enabled && global2FA.secret) {
-				requires2FA = true;
-			}
-			
-			if (requires2FA && !twoFactorCode) {
-				showError("Vui lòng nhập mã 2FA!");
-				document.getElementById("twoFactorCode").focus();
-				return;
-			}
-			
-			try {
-				// Kiểm tra rate limiting
-				checkRateLimit();
-				
-				// Ẩn lỗi cũ
-				hideError();
-				
-				// Hiển thị loading
-				setLoading(true);
-				
-				// Xác thực hoàn toàn ẩn mật khẩu với 2FA
-				const result = hiddenAuth.verify(password, twoFactorCode);
-				
-				if (result.success) {
-					// Auto sync from remote on successful login
-					if (window.syncManager) {
-						try {
-							await window.syncManager.performAutoSync();
-						} catch (syncError) {
-							console.warn('Auto sync failed on login:', syncError);
-						}
-					}
-					
-					// Lưu session
-					localStorage.setItem("admin_logged_in", "true");
-					localStorage.setItem("admin_login_time", Date.now().toString());
-					
-					// Track session if security system is available
-					if (window.adminSecurity) {
-						window.adminSecurity.trackCurrentSession();
-					}
-					
-					// Xóa lần đăng nhập sai
-					clearAttempts();
-					
-					// Chuyển đến trang admin
-					window.location.href = "admin.html";
-				} else {
-					if (result.requires2FA) {
-						// Show 2FA field
-						document.getElementById("2fa-field").style.display = "block";
-						document.getElementById("twoFactorCode").focus();
-						showError("Vui lòng nhập mã 2FA!");
-					} else {
-						// Ghi nhận lần đăng nhập sai
-						recordFailedAttempt();
-						if (result.message.includes('2FA')) {
-							showError("Mã 2FA không đúng! Vui lòng lấy mã từ ứng dụng xác thực hoặc 2fa.live");
-						} else {
-							showError(result.message);
-						}
-						document.getElementById("password").value = "";
-						document.getElementById("twoFactorCode").value = "";
-						// Keep 2FA field visible if 2FA is globally enabled
-						const global2FA = getGlobal2FAStatus();
-						if (!global2FA || !global2FA.enabled) {
-							document.getElementById("2fa-field").style.display = "none";
-						}
-						document.getElementById("password").focus();
-					}
-				}
-			} catch (error) {
-				showError(error.message);
-				document.getElementById("password").value = "";
-				document.getElementById("twoFactorCode").value = "";
-				// Keep 2FA field visible if 2FA is globally enabled
-				const global2FA = getGlobal2FAStatus();
-				if (!global2FA || !global2FA.enabled) {
-					document.getElementById("2fa-field").style.display = "none";
-				}
-			} finally {
-				setLoading(false);
-			}
-		});
-		
-		// Get global 2FA status (works across all sessions)
-		function getGlobal2FAStatus() {
-			try {
-				// Try localStorage first
-				let global2FA = localStorage.getItem('global_admin_2fa');
-				if (global2FA) {
-					return JSON.parse(global2FA);
-				}
-				
-				// Try sessionStorage as backup
-				global2FA = sessionStorage.getItem('global_admin_2fa');
-				if (global2FA) {
-					return JSON.parse(global2FA);
-				}
-				
-				return null;
-			} catch (error) {
-				console.error('Failed to get global 2FA status:', error);
-				return null;
-			}
-		}
-		
-		// Check if 2FA is enabled and show field
-		function check2FAStatus() {
-			const global2FA = getGlobal2FAStatus();
-			if (global2FA && global2FA.enabled && global2FA.secret) {
-				document.getElementById('2fa-field').style.display = 'block';
-				document.querySelector('.login-subtitle').textContent = 'Nhập mật khẩu và mã 2FA để truy cập trang quản lý';
-				console.log('2FA is enabled globally, showing 2FA field');
-			}
-		}
-
-
-		// Focus vào input password khi trang load
+		// Khởi tạo Google Sign-In khi trang load
 		document.addEventListener('DOMContentLoaded', function() {
-			// Force sync global 2FA status if needed
-			if (window.adminSecurity) {
-				window.adminSecurity.forceSyncGlobal2FA();
-			}
-			
-			check2FAStatus();
-			document.getElementById('password').focus();
-			
-			// Listen for session termination
-			window.addEventListener('sessionsTerminated', function() {
-				if (window.adminSecurity && window.adminSecurity.isSessionTerminated()) {
-					alert('Phiên đăng nhập của bạn đã bị kết thúc bởi admin khác!');
-					// Clear any stored login data
-					localStorage.removeItem('admin_logged_in');
-					sessionStorage.removeItem('admin_logged_in');
-				}
-			});
-		});
-		
-		// Enter để submit
-		document.getElementById('password').addEventListener('keypress', function(e) {
-			if (e.key === 'Enter') {
-				document.getElementById('login-form').dispatchEvent(new Event('submit'));
-			}
+			// Google Sign-In sẽ được khởi tạo bởi google-auth.js
+			console.log('Trang đăng nhập đã sẵn sàng - chỉ hỗ trợ Google Sign-In');
 		});
 	</script>
 </body>

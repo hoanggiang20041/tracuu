@@ -15,6 +15,8 @@
 			max-width: 1400px;
 			margin: 0 auto;
 			padding: 20px;
+			-webkit-text-size-adjust: 100%;
+			text-size-adjust: 100%;
 		}
 		
 		.admin-header {
@@ -143,6 +145,7 @@
 			border-radius: 20px;
 			padding: 30px;
 			box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+			-webkit-backdrop-filter: blur(20px);
 			backdrop-filter: blur(20px);
 			margin-bottom: 30px;
 		}
@@ -326,6 +329,7 @@
 			border-radius: 20px;
 			overflow: hidden;
 			box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+			-webkit-backdrop-filter: blur(20px);
 			backdrop-filter: blur(20px);
 		}
 		
@@ -722,12 +726,12 @@
 				<h1>Quản lý phiếu bảo hành</h1>
 			</div>
 			<div class="admin-actions">
-				<a href="index.html" class="back-link">
-					<i class="fas fa-home"></i>
+				<a href="index.html" class="back-link" title="Quay về trang chính" aria-label="Quay về trang chính">
+					<i class="fas fa-home" aria-hidden="true"></i>
 					Về trang chính
 				</a>
-				<button class="logout-btn" onclick="logout()">
-					<i class="fas fa-sign-out-alt"></i>
+				<button class="logout-btn" onclick="logout()" title="Đăng xuất khỏi hệ thống admin" aria-label="Đăng xuất khỏi hệ thống admin">
+					<i class="fas fa-sign-out-alt" aria-hidden="true"></i>
 					Đăng xuất
 				</button>
 			</div>
@@ -735,28 +739,28 @@
 
 		<!-- Tabs -->
 		<div class="admin-tabs">
-			<button class="tab-btn active" onclick="showTab('warranty', this)">
-				<i class="fas fa-file-contract"></i>
+			<button class="tab-btn active" onclick="showTab('warranty', this)" title="Xem danh sách phiếu bảo hành" aria-label="Xem danh sách phiếu bảo hành">
+				<i class="fas fa-file-contract" aria-hidden="true"></i>
 				Phiếu bảo hành
 			</button>
-			<button class="tab-btn" onclick="showTab('customers', this)">
-				<i class="fas fa-users"></i>
+			<button class="tab-btn" onclick="showTab('customers', this)" title="Xem danh sách khách hàng" aria-label="Xem danh sách khách hàng">
+				<i class="fas fa-users" aria-hidden="true"></i>
 				Khách hàng
 			</button>
-			<button class="tab-btn" onclick="showTab('add', this)">
-				<i class="fas fa-plus-circle"></i>
+			<button class="tab-btn" onclick="showTab('add', this)" title="Thêm phiếu bảo hành mới" aria-label="Thêm phiếu bảo hành mới">
+				<i class="fas fa-plus-circle" aria-hidden="true"></i>
 				Thêm mới
 			</button>
-			<button class="tab-btn" onclick="showTab('pricing', this)">
-				<i class="fas fa-money-bill-wave"></i>
+			<button class="tab-btn" onclick="showTab('pricing', this)" title="Quản lý giá gia hạn" aria-label="Quản lý giá gia hạn">
+				<i class="fas fa-money-bill-wave" aria-hidden="true"></i>
 				Giá gia hạn
 			</button>
-			<button class="tab-btn" onclick="showTab('discounts', this)">
-				<i class="fas fa-tags"></i>
+			<button class="tab-btn" onclick="showTab('discounts', this)" title="Quản lý mã giảm giá" aria-label="Quản lý mã giảm giá">
+				<i class="fas fa-tags" aria-hidden="true"></i>
 				Mã giảm giá
 			</button>
-			<button class="tab-btn" onclick="showTab('renewals', this)">
-				<i class="fas fa-receipt"></i>
+			<button class="tab-btn" onclick="showTab('renewals', this)" title="Xem yêu cầu gia hạn" aria-label="Xem yêu cầu gia hạn">
+				<i class="fas fa-receipt" aria-hidden="true"></i>
 				Yêu cầu gia hạn
 			</button>
 		</div>
@@ -1133,6 +1137,22 @@
 				window.location.href = "login.html";
 				return false;
 			}
+
+			// Nếu cấu hình Google email, bắt buộc phải đúng email
+			try {
+				var allowed = (window.ADMIN_GOOGLE_EMAIL||'').toLowerCase();
+				if (allowed){
+					var current = (localStorage.getItem('admin_email')||'').toLowerCase();
+					if (current !== allowed){
+						alert('Tài khoản Google không có quyền truy cập.');
+						localStorage.removeItem('admin_logged_in');
+						localStorage.removeItem('admin_login_time');
+						localStorage.removeItem('admin_email');
+						window.location.href = 'login.html';
+						return false;
+					}
+				}
+			} catch(_){ }
 			
 			return true;
 		}
@@ -1169,6 +1189,7 @@
 		function logout() {
 			localStorage.removeItem("admin_logged_in");
 			localStorage.removeItem("admin_login_time");
+			localStorage.removeItem("admin_email");
 			window.location.href = "login.html";
 		}
 		
@@ -1348,5 +1369,25 @@
 			console.log("User not authenticated, admin.js not loaded");
 		}
 	</script>
+	<!-- Load cấu hình từ file riêng -->
+	<script src="config.js"></script>
+	<script>
+		// Fallback nếu config.js không load được
+		if (typeof window.APP_CONFIG === 'undefined') {
+			console.error('Không tìm thấy file config.js! Vui lòng tạo file config.js từ config.example.js');
+			window.APP_CONFIG = {
+				GOOGLE_CLIENT_ID: '',
+				ADMIN_GOOGLE_EMAIL: '',
+				GS_PUBLISHED_CSV_URL: '',
+				DEBUG: true
+			};
+		}
+		
+		// Sử dụng config
+		window.GOOGLE_CLIENT_ID = window.APP_CONFIG.GOOGLE_CLIENT_ID;
+		window.ADMIN_GOOGLE_EMAIL = window.APP_CONFIG.ADMIN_GOOGLE_EMAIL;
+	</script>
+	<script src="https://accounts.google.com/gsi/client" async defer></script>
+	<script src="assets/google-auth.js"></script>
 </body>
 </html>

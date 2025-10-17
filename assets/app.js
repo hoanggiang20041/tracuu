@@ -20,6 +20,9 @@
 
 // Cấu hình API endpoint (sử dụng proxy để ẩn thông tin nhạy cảm)
 const API_URL = "/api/warranty-data";
+// Tùy chọn: Nguồn Google Sheets đã publish (CSV/TSV)
+// Cấu hình bằng cách set window.GS_PUBLISHED_CSV_URL = 'https://docs.google.com/spreadsheets/d/.../pub?output=csv'
+const GS_CSV_URL = (typeof window !== 'undefined' && window.GS_PUBLISHED_CSV_URL) ? window.GS_PUBLISHED_CSV_URL : '';
 
 // DOM Elements
 const loadingOverlay = document.getElementById("loading-overlay");
@@ -213,9 +216,51 @@ const FALLBACK_DATA = [
   }
 ];
 
-// Tải dữ liệu từ API proxy với fallback
+// Parse CSV (đơn giản): kỳ vọng cột: id,name,title,image,start,end
+function parseCsv(text){
+    try {
+        const lines = text.split(/\r?\n/).filter(l=>l.trim().length>0);
+        if (lines.length === 0) return [];
+        const header = lines[0].split(',').map(h=>h.trim().toLowerCase());
+        const records = [];
+        for (let i=1;i<lines.length;i++){
+            const cols = lines[i].split(',');
+            const obj = {};
+            for (let j=0;j<header.length;j++){
+                const key = header[j] || ('col'+j);
+                obj[key] = (cols[j]||'').trim();
+            }
+            records.push({
+                id: obj.id || '',
+                name: obj.name || '',
+                title: obj.title || '',
+                image: obj.image || '',
+                start: obj.start || '',
+                end: obj.end || ''
+            });
+        }
+        return records;
+    } catch(_){ return []; }
+}
+
+// Tải dữ liệu ưu tiên từ Google Sheets (nếu cấu hình), sau đó API proxy với fallback
 async function loadData() {
 	try {
+        // 1) Google Sheets CSV nếu có cấu hình
+        if (GS_CSV_URL){
+            try {
+                const gsRes = await fetch(GS_CSV_URL, { cache: 'no-store' });
+                if (gsRes.ok){
+                    const csvText = await gsRes.text();
+                    const rows = parseCsv(csvText);
+                    if (Array.isArray(rows) && rows.length){
+                        window.__DATA_SOURCE = 'google_sheets';
+                        return rows;
+                    }
+                }
+            } catch(_) { /* ignore and fall back */ }
+        }
+
 		const res = await fetch(API_URL, { 
 			cache: "no-store",
 			headers: {
@@ -257,7 +302,7 @@ async function loadData() {
 		// Đánh dấu nguồn dữ liệu
 		window.__DATA_SOURCE = 'api';
 		
-		return result || [];
+        return result || [];
 	} catch (error) {
 		// Hiển thị thông báo lỗi chi tiết hơn cho debugging
 		console.error('Load data error:', error);

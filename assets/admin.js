@@ -331,14 +331,14 @@ function renderRenewalSection(type, renewals) {
                 <td>${r.billUrl?`<a href="${r.billUrl}" target="_blank" class="btn btn-sm btn-outline-primary">Xem hóa đơn</a>`:'-'}</td>
                 <td><small class="text-muted">${createdAt}</small></td>
                 <td>
-                    <button class="btn btn-info btn-sm" onclick="showCustomerWarranties('${r.id}', '${r.name}')" title="Xem phiếu bảo hành">
-                        <i class='fas fa-eye'></i>
+                    <button class="btn btn-info btn-sm" onclick="showCustomerWarranties('${r.id}', '${r.name}')" title="Xem phiếu bảo hành" aria-label="Xem phiếu bảo hành">
+                        <i class='fas fa-eye' aria-hidden="true"></i>
                     </button>
-                    <button class="btn btn-success btn-sm" onclick="approveRenewal(${originalIndex})" title="Duyệt gia hạn">
-                        <i class='fas fa-check'></i>
+                    <button class="btn btn-success btn-sm" onclick="approveRenewal(${originalIndex})" title="Duyệt gia hạn" aria-label="Duyệt gia hạn">
+                        <i class='fas fa-check' aria-hidden="true"></i>
                     </button>
-                    <button class="btn btn-danger btn-sm" onclick="rejectRenewal(${originalIndex})" title="Từ chối">
-                        <i class='fas fa-times'></i>
+                    <button class="btn btn-danger btn-sm" onclick="rejectRenewal(${originalIndex})" title="Từ chối gia hạn" aria-label="Từ chối gia hạn">
+                        <i class='fas fa-times' aria-hidden="true"></i>
                     </button>
                 </td>`;
         } else if (type === 'approved') {
@@ -630,11 +630,11 @@ function createWarrantyRow(warranty) {
         </td>
         <td>
             <div class="action-buttons">
-                <button class="btn btn-warning btn-sm" onclick="editWarranty('${warranty.id || warranty.customerId}')" title="Sửa">
-                    <i class="fas fa-edit"></i>
+                <button class="btn btn-warning btn-sm" onclick="editWarranty('${warranty.id || warranty.customerId}')" title="Sửa phiếu bảo hành" aria-label="Sửa phiếu bảo hành">
+                    <i class="fas fa-edit" aria-hidden="true"></i>
                 </button>
-                <button class="btn btn-danger btn-sm" onclick="deleteWarranty('${warranty.id || warranty.customerId}')" title="Xóa">
-                    <i class="fas fa-trash"></i>
+                <button class="btn btn-danger btn-sm" onclick="deleteWarranty('${warranty.id || warranty.customerId}')" title="Xóa phiếu bảo hành" aria-label="Xóa phiếu bảo hành">
+                    <i class="fas fa-trash" aria-hidden="true"></i>
                 </button>
             </div>
         </td>
@@ -688,11 +688,11 @@ function createCustomerRow(customer) {
         </td>
         <td>
             <div class="action-buttons">
-                <button class="btn btn-warning btn-sm" onclick="editCustomer('${customer.id}')" title="Sửa">
-                    <i class="fas fa-edit"></i>
+                <button class="btn btn-warning btn-sm" onclick="editCustomer('${customer.id}')" title="Sửa thông tin khách hàng" aria-label="Sửa thông tin khách hàng">
+                    <i class="fas fa-edit" aria-hidden="true"></i>
                 </button>
-                <button class="btn btn-danger btn-sm" onclick="deleteCustomer('${customer.id}')" title="Xóa">
-                    <i class="fas fa-trash"></i>
+                <button class="btn btn-danger btn-sm" onclick="deleteCustomer('${customer.id}')" title="Xóa khách hàng" aria-label="Xóa khách hàng">
+                    <i class="fas fa-trash" aria-hidden="true"></i>
                 </button>
             </div>
         </td>

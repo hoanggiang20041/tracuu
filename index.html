@@ -62,7 +62,7 @@
 						<label style="font-weight:600; font-size:0.9rem; color:#374151">Mã giảm giá (nếu có)</label>
 						<div style="display:flex; gap:8px;">
 							<input id="renew-discount" type="text" placeholder="GIAM10" style="flex:1; padding:12px; border:1px solid #e5e7eb; border-radius:10px; text-transform:uppercase;" />
-							<button class="download-btn" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)" onclick="applyRenewDiscount()"><i class="fas fa-check"></i> Áp dụng</button>
+							<button class="download-btn" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)" onclick="applyRenewDiscount()" title="Áp dụng mã giảm giá" aria-label="Áp dụng mã giảm giá"><i class="fas fa-check" aria-hidden="true"></i> Áp dụng</button>
 						</div>
 						<div id="discount-note" style="font-size:0.85rem; color:#6b7280; margin-top:6px;"></div>
 					</div>
@@ -76,7 +76,7 @@
 						<div id="renew-amount" style="font-size:1.3rem; font-weight:700; color:#111827">0 đ</div>
 						<div style="font-size:0.9rem; color:#6b7280" id="renew-content"></div>
 						<div style="display:flex; gap:8px; margin-top:8px;">
-							<button class="download-btn" onclick="copyRenewContent()"><i class="fas fa-copy"></i> Sao chép nội dung</button>
+							<button class="download-btn" onclick="copyRenewContent()" title="Sao chép nội dung gia hạn" aria-label="Sao chép nội dung gia hạn"><i class="fas fa-copy" aria-hidden="true"></i> Sao chép nội dung</button>
 						</div>
 						<div style="font-size:0.85rem; color:#6b7280; margin-top:6px;">Vui lòng sao chép đúng nội dung và chụp màn hình đã thanh toán.</div>
 					</div>
@@ -92,7 +92,7 @@
 				</div>
 
 				<div class="modal-actions">
-					<button class="download-btn" onclick="submitRenewRequest()"><i class="fas fa-paper-plane"></i> Gửi yêu cầu</button>
+					<button class="download-btn" onclick="submitRenewRequest()" title="Gửi yêu cầu gia hạn" aria-label="Gửi yêu cầu gia hạn"><i class="fas fa-paper-plane" aria-hidden="true"></i> Gửi yêu cầu</button>
 				</div>
 			</div>
 		</div>
@@ -204,6 +204,23 @@
 		</div>
 	</footer>
 
+	<!-- Load cấu hình từ file riêng -->
+	<script src="config.js"></script>
+	<script>
+		// Fallback nếu config.js không load được
+		if (typeof window.APP_CONFIG === 'undefined') {
+			console.error('Không tìm thấy file config.js! Vui lòng tạo file config.js từ config.example.js');
+			window.APP_CONFIG = {
+				GOOGLE_CLIENT_ID: '',
+				ADMIN_GOOGLE_EMAIL: '',
+				GS_PUBLISHED_CSV_URL: '',
+				DEBUG: true
+			};
+		}
+		
+		// Sử dụng config
+		window.GS_PUBLISHED_CSV_URL = window.APP_CONFIG.GS_PUBLISHED_CSV_URL;
+	</script>
 	<script src="assets/app.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function(){
