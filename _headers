@@ -18,3 +18,8 @@
   Access-Control-Allow-Origin: *
   Access-Control-Allow-Methods: GET, POST, OPTIONS
   Access-Control-Allow-Headers: Content-Type, Authorization
+
+# Fix Cross-Origin-Opener-Policy
+/*
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+  Cross-Origin-Embedder-Policy: unsafe-none
